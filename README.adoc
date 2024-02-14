@@ -1,0 +1,36 @@
+= Video generator
+
+Le but de ce projet est de générer une vidéo avec du texte.
+
+Prérequis:
+----
+sudo apt intall magick
+pip install moviepy
+pip install scipy
+
+pip install keyboard
+----
+
+== Ressources
+
+
+* https://www.stackbuilders.com/blog/python-video-generation/
+* https://zulko.github.io/moviepy/getting_started/compositing.html
+
+== Development
+
+To run tests:
+
+----
+python3 -m unittest
+----
+
+To run one file:
+----
+python3 -m unittest test_video_generator.py
+----
+or
+----
+python3 test_video_generator.py
+----
+ 
