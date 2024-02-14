@@ -5,9 +5,7 @@ from enum import Enum
 import glob
 import os
 import re
-import shutil
 import sys
-import unittest
 
 import moviepy.editor as mpy
 from moviepy.video import fx
@@ -45,15 +43,15 @@ def generate_test_video():
         resize(width=20)
 
     infos = [
-        ("0 - 0", 0, 0, 0, 2),
-        ("0 - 2", 0, 2, 2, 4),
-        ("2 - 2", 2, 2, 4, 6),
-        ("3 - 2", 3, 2, 6, 8),
+        (0, 0, 0, 2),
+        (0, 2, 2, 4),
+        (2, 2, 4, 6),
+        (3, 2, 6, 8),
         
         # ("3 - 4", 0, 0, 0, 5),
         #("5 - 4", 0, 0, 0, 5),
     ]
-    clips = [sb_logo] + generate_score_clips(infos)
+    clips = [sb_logo] + generate_score_clips(infos, "LOCAUX", "VISITEUR")
     
     screen_size = (250, 60)
     final_clip = (
@@ -165,7 +163,7 @@ class Score:
             return Score(self.team_a, self.team_b+points)
 class EventFile:
     
-    def extract_lines_infos(self, lines, a, b, team_a, team_b, initial_start_time):
+    def extract_lines_infos(self, lines, a, b, initial_start_time):
         infos = []
         score = Score(a, b)
         start_time = initial_start_time
@@ -175,7 +173,7 @@ class EventFile:
             team = record.team
             end_time = record.time_in_seconds + initial_start_time
             
-            infos.append((MatchVideo("", team_a, team_b).format_score(score), a, b, start_time, end_time))
+            infos.append((a, b, start_time, end_time))
                        
             score = score.add(points, team)
             a = score.team_a
@@ -190,7 +188,7 @@ class EventFile:
         infos=[]
         with open(input_name, "r") as input_file:
             lines = input_file.readlines()
-            return self.extract_lines_infos(lines, a, b, team_a, team_b, start_time)
+            return self.extract_lines_infos(lines, a, b, start_time)
     
 def time_to_seconds(time):
     seconds = re.match(r"(\d+)s?$", time)
@@ -209,16 +207,16 @@ def time_to_seconds(time):
 
     
 # Generate score and logo to display
-def generate_score_clips(infos):
+def generate_score_clips(infos, team_a, team_b):
     sb_logo = mpy.ImageClip(SB_LOGO_PATH)\
         .set_position(('left', 0))\
         .resize(width=80)
 
     clips = [sb_logo]
-    for (score,_,_,start_time,end_time) in infos:
+    for (a,b,start_time,end_time) in infos:
         print(f"{start_time} -> {end_time}")
         score_clip = mpy.TextClip(
-                score,
+                MatchVideo("", team_a, team_b).format_score(Score(a, b)),
                 font="Charter-bold",
                 color="Yellow",
                 kerning=4,
@@ -264,8 +262,8 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, a, b,
     if os.path.isfile(csv_file):
         infos=EventFile.extract_infos(f"{csv_file}", a, b, team_a, team_b)
         print(f"{infos}")
-        clips += generate_score_clips(infos)
-        (_,a,b,_,_) = infos[-1]
+        clips += generate_score_clips(infos, team_a, team_b)
+        (a,b,_,_) = infos[-1]
     else:
         print("    No csv file")
     
@@ -494,7 +492,7 @@ class MatchVideo:
             print(file)
             filename=os.path.basename(file).replace(".csv", "")
             extracted_infos = EventFile().extract_infos(f"{self.csv_folder}/{filename}.csv", score.team_a, score.team_b, self.team_a, self.team_b)
-            infos += [(self.format_score(Score(info[1], info[2])), info[1], info[2], start_time+info[3], start_time+info[4]) for info in extracted_infos[1:]]
+            infos += [(self.format_score(Score(info[0], info[1])), info[0], info[1], start_time+info[2], start_time+info[3]) for info in extracted_infos[1:]]
             
             (_,a,b,_,start_time) = infos[-1]
             score = Score(a, b)

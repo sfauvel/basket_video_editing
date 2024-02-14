@@ -1,18 +1,8 @@
 
 
-from datetime import timedelta, datetime
-from enum import Enum
-import glob
 import os
-import re
 import shutil
-import sys
 import unittest
-
-import moviepy.editor as mpy
-from moviepy.video import fx
-from moviepy.video.tools.segmenting import findObjects
-from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 from video_generator import *
 
@@ -66,11 +56,11 @@ class TestVideoGenerator(unittest.TestCase):
             "1;B;5",
             "3;A;7",
             "0;A;10",
-        ], 0, 0, "A", "B", 0)
-        assert infos[0] == ("A 0 - 0 B", 0, 0, 0, 3)
-        assert infos[1] == ("A 2 - 0 B", 2, 0, 3, 5)
-        assert infos[2] == ("A 2 - 1 B", 2, 1, 5, 7)
-        assert infos[3] == ("A 5 - 1 B", 5, 1, 7, 10)
+        ], 0, 0, 0)
+        assert infos[0] == (0, 0, 0, 3)
+        assert infos[1] == (2, 0, 3, 5)
+        assert infos[2] == (2, 1, 5, 7)
+        assert infos[3] == (5, 1, 7, 10)
         assert len(infos) == 4
         
     def test_extract_infos_with_several_formats(self):
@@ -79,21 +69,21 @@ class TestVideoGenerator(unittest.TestCase):
             "1;B;5",
             "3;A;3:12",
             "0;A;1:02:14",
-        ], 0, 0, "A", "B", 0)
-        assert infos[0] == ("A 0 - 0 B", 0, 0, 0, 3)
-        assert infos[1] == ("A 2 - 0 B", 2, 0, 3, 5)
-        assert infos[2] == ("A 2 - 1 B", 2, 1, 5, 192)
-        assert infos[3] == ("A 5 - 1 B", 5, 1, 192, 3734)
+        ], 0, 0, 0)
+        assert infos[0] == (0, 0, 0, 3)
+        assert infos[1] == (2, 0, 3, 5)
+        assert infos[2] == (2, 1, 5, 192)
+        assert infos[3] == (5, 1, 192, 3734)
         assert len(infos) == 4
         
     def test_extract_infos_with_several_formats_with_an_initial_score_and_time(self):
         infos = EventFile().extract_lines_infos([
             "2;A;3s",
             "0;A;8s",
-        ], 5, 8, "A", "B", 10)
+        ], 5, 8, 10)
         
-        assert infos[0] == ("A 5 - 8 B", 5, 8, 10, 13), infos[0]
-        assert infos[1] == ("A 7 - 8 B", 7, 8, 13, 18), infos[1]
+        assert infos[0] == (5, 8, 10, 13), infos[0]
+        assert infos[1] == (7, 8, 13, 18), infos[1]
 
     def test_time_to_seconds(self):
         assert 5 == time_to_seconds("5")
