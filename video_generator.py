@@ -38,10 +38,6 @@ def generate_score(points):
 
 def generate_test_video():
 
-    sb_logo = mpy.ImageClip(SB_LOGO_PATH).\
-        set_position(('left', 0)).\
-        resize(width=20)
-
     infos = [
         (0, 0, 0, 2),
         (0, 2, 2, 4),
@@ -51,7 +47,7 @@ def generate_test_video():
         # ("3 - 4", 0, 0, 0, 5),
         #("5 - 4", 0, 0, 0, 5),
     ]
-    clips = [sb_logo] + generate_score_clips(infos, "LOCAUX", "VISITEUR", None, (1024, 640))
+    clips = generate_score_clips(infos, "LOCAUX", "VISITEUR", None, (1024, 640))
     
     screen_size = (250, 60)
     final_clip = (
@@ -203,98 +199,75 @@ def time_to_seconds(time):
         return int(hours_minutes_seconds[1])*3600+int(hours_minutes_seconds[2])*60+int(hours_minutes_seconds[3])
     
 
+def create_text_clip(text, font_size, color):
+    return mpy.TextClip(
+                text,
+                font="Charter-bold",
+                color=color,
+                kerning=4,
+                fontsize=font_size,
+            )
+
 # Generate score and logo to display
 def generate_score_clips(infos, team_a, team_b, quarter_time, size):
+    score_font_size = 50
+    
+    def position_left_from(clip, clip_from, margin_x, margin_y=0):
+        from_right_pos = clip_from.pos(0)[0]
+        return clip.set_position((from_right_pos-clip.size[0]-margin_x, margin_y))
+    
+    def position_right_from(clip, clip_from, margin_x, margin_y=0):
+        from_left_pos = clip_from.pos(0)[0]+clip_from.size[0]
+        return clip.set_position((from_left_pos+margin_x, margin_y))
+    
+    def center(clip, video_size):
+        return clip.set_position((video_size[0]/2-clip.size[0]/2, 0))
+        
+    def create_score_clip(text):
+        return create_text_clip(text, font_size=score_font_size, color="Yellow")
+        
     sb_logo = mpy.ImageClip(SB_LOGO_PATH)\
         .set_position(('left', 0))\
         .resize(width=80)
 
-    clips = [sb_logo]
+    all_clips = [sb_logo]
     for (a,b,start_time,end_time) in infos:
+        clips = []
         print(f"{start_time} -> {end_time}")
+        separator_clip = center(create_score_clip("-"), size)
+        clips.append(separator_clip)
         
-        score_clip = mpy.TextClip(
-                # MatchVideo("", team_a, team_b).format_score(Score(a, b)),
-                f"-",
-                font="Charter-bold",
-                color="Yellow",
-                kerning=4,
-                fontsize=50,
-            )\
-            .set_start(start_time)\
-            .set_end(end_time)
+        score_a_clip = position_left_from(create_score_clip(f"{a}"), separator_clip, 10)
+        clips.append(score_a_clip)
         
-        score_clip = score_clip.set_position((size[0]/2-score_clip.size[0]/2, 0))
-        clips.append(score_clip)
+        score_b_clip = position_right_from(create_score_clip(f"{b}"), separator_clip, 10)
+        clips.append(score_b_clip)
         
-        score_clip = mpy.TextClip(
-                f"{a}",
-                font="Charter-bold",
-                color="Yellow",
-                kerning=4,
-                fontsize=50,
-            )\
-            .set_start(start_time)\
-            .set_end(end_time)
+        # Should be compute with score_a_clip width with value 100
+        team_font_size = 40
+        delta_x_label = 140
+        delta_y_label = score_font_size-team_font_size
         
-        score_clip = score_clip.set_position((size[0]/2-score_clip.size[0]-20, 0))
-        clips.append(score_clip)
-        
-        
-        score_clip = mpy.TextClip(
-                f"{b}",
-                font="Charter-bold",
-                color="Yellow",
-                kerning=4,
-                fontsize=50,
-            )\
-            .set_start(start_time)\
-            .set_end(end_time)
-        
-        score_clip = score_clip.set_position((size[0]/2+20, 0))
-        clips.append(score_clip)
-        
-        team_a_clip = mpy.TextClip(
-                team_a,
-                font="Charter-bold",
-                color="White",
-                kerning=4,
-                fontsize=40,
-            )\
-            .set_start(start_time)\
-            .set_end(end_time)
-        
-        delta_x_label = 80
-        team_a_clip = team_a_clip.set_position((size[0]/2-score_clip.size[0]/2-team_a_clip.size[0]-delta_x_label, 10))
+        team_a_clip = create_text_clip(team_a, font_size=team_font_size, color="White")
+        team_a_clip = position_left_from(team_a_clip, separator_clip, delta_x_label, delta_y_label)
         clips.append(team_a_clip)
         
-        team_b_clip = mpy.TextClip(
-                team_b,
-                font="Charter-bold",
-                color="White",
-                kerning=4,
-                fontsize=40,
-            )\
-            .set_start(start_time)\
-            .set_end(end_time)
-        
-        team_b_clip = team_b_clip.set_position((size[0]/2+score_clip.size[0]/2+delta_x_label, 10))
+        team_b_clip = create_text_clip(team_b, font_size=team_font_size, color="White")
+        team_b_clip = position_right_from(team_b_clip, separator_clip, delta_x_label, delta_y_label)
         clips.append(team_b_clip)
         
         if quarter_time != None:
-            quarter_clip = mpy.TextClip(
-                    quarter_time,
-                    font="Charter-bold",
-                    color="White",
-                    kerning=4,
-                    fontsize=20,
-                )\
-                .set_start(start_time)\
-                .set_end(end_time)
-                
+            quarter_clip = create_text_clip(quarter_time, font_size=20, color="White")
             quarter_clip = quarter_clip.set_position((size[0]/2-quarter_clip.size[0]/2, 0))
             clips.append(quarter_clip)
-    return clips
+            
+            
+        def clip_with_time(clip):
+            return clip.set_start(start_time).set_end(end_time)
+        
+        all_clips += [clip_with_time(clip) for clip in clips]
+    
+    return all_clips
 
 def generate_from_dir(csv_folder, video_folder, output_folder, team_a, team_b):
     files = glob.glob(f'{video_folder}/*.mp4')
@@ -330,6 +303,9 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, a, b,
     if os.path.isfile(csv_file):
         infos=EventFile().extract_infos(f"{csv_file}", a, b, team_a, team_b)
         print(f"{infos}")
+        # Align end of infos with the video duration.
+        last_info = infos[-1]
+        infos[-1] = (last_info[0], last_info[1], last_info[2], duration)
         clips += generate_score_clips(infos, team_a, team_b, None, screen_size)
         (a,b,_,_) = infos[-1]
     else:
@@ -616,3 +592,7 @@ if __name__ == "__main__":
         MatchVideo(folder, "SLB", "USCB").highlight()
     else:
         print(f"Unrecognized command `{args[1]}`")
+        
+        
+        
+        # rm  MatchTest/output/*.*;clear;python3 video_generator.py full MatchTest
