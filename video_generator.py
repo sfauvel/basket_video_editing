@@ -156,6 +156,52 @@ class Score:
             return Score(self.team_a+points, self.team_b)
         else:
             return Score(self.team_a, self.team_b+points)
+
+class MatchEvent:
+    def __init__(self, start_time, end_time):
+        self.start = start_time
+        self.end = end_time
+        self.quarter_time = None
+        self.points = None
+
+class MatchState:
+    def __init__(self, start, end, score, quarter_time):
+        self.start=start
+        self.end=end
+        self.score=score
+        self.quarter_time=quarter_time
+
+    def __str__(self) -> str:
+        return f"start={self.start}, end={self.end}, score={self.score}, quarter_time={self.quarter_time}"
+
+def read_content_of_file(file): 
+    with open(file, "r") as input_file:
+        return input_file.readlines()
+    
+class MatchPart:
+    def build_from_csv(csv_file, score=Score(0,0)):
+        content = read_content_of_file(csv_file)
+        events = [EventRecord.from_csv(line) for line in content]
+            
+        return MatchPart(0, 0, events, score)
+    
+    def __init__(self, start_time, end_time, events, score=Score(0,0)):
+        self.start = start_time
+        self.end = end_time
+        self.events = events
+        self.initial_score = score
+        
+    def states(self):
+        initial_state = MatchState(0, 0, self.initial_score, None)
+        states = []
+        current_state = initial_state
+        for event in self.events:
+            current_state.end = event.time_in_seconds
+            states.append(current_state)
+
+            current_state = MatchState(current_state.end, current_state.end, current_state.score.add(event.points, event.team) , event.quarter_time)
+        return states 
+        
 class EventFile:
     
     def extract_lines_infos(self, lines, a, b, initial_start_time):
@@ -177,9 +223,20 @@ class EventFile:
                 
         return infos
 
-
+    def extract_match_events(self, lines, initial_score=Score(0,0)) -> MatchPart:
+        start_time = 0
+        end_time = 0
+        events = []
+        for line in lines:
+            record = EventRecord.from_csv(line)
+            end_time = record.time_in_seconds
+            events.append(record)
+            start_time = end_time
+        
+        return MatchPart(0, end_time, events, score=initial_score)
+    
     # Generate information to insert in the video
-    def extract_infos(self, input_name, a, b, team_a, team_b, start_time=0):
+    def extract_infos(self, input_name, a, b, start_time=0):
         infos=[]
         with open(input_name, "r") as input_file:
             lines = input_file.readlines()
@@ -301,7 +358,7 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, a, b,
     csv_file=f"{csv_folder}/{filename}.csv" 
     print(f"    CSV: {csv_file}")  
     if os.path.isfile(csv_file):
-        infos=EventFile().extract_infos(f"{csv_file}", a, b, team_a, team_b)
+        infos=EventFile().extract_infos(f"{csv_file}", a, b)
         print(f"{infos}")
         # Align end of infos with the video duration.
         last_info = infos[-1]
@@ -535,7 +592,7 @@ class MatchVideo:
         for file in files:
             print(file)
             filename=os.path.basename(file).replace(".csv", "")
-            extracted_infos = EventFile().extract_infos(f"{self.csv_folder}/{filename}.csv", score.team_a, score.team_b, self.team_a, self.team_b)
+            extracted_infos = EventFile().extract_infos(f"{self.csv_folder}/{filename}.csv", score.team_a, score.team_b)
             infos += [(self.format_score(Score(info[0], info[1])), info[0], info[1], start_time+info[2], start_time+info[3]) for info in extracted_infos[1:]]
             
             (_,a,b,_,start_time) = infos[-1]
