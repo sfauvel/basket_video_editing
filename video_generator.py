@@ -12,6 +12,9 @@ from moviepy.video import fx
 from moviepy.video.tools.segmenting import findObjects
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
+
+from video_match import *
+
 WHITE = (255, 255, 255)
 # SCREEN_SIZE = (640, 50)
 SCREEN_SIZE = (250, 30)
@@ -36,28 +39,6 @@ def generate_score(points):
         score_evolution.append((a,b,time))
     return score_evolution
 
-def generate_test_video():
-
-    infos = [
-        (0, 0, 0, 2),
-        (0, 2, 2, 4),
-        (2, 2, 4, 6),
-        (3, 2, 6, 8),
-        
-        # ("3 - 4", 0, 0, 0, 5),
-        #("5 - 4", 0, 0, 0, 5),
-    ]
-    clips = generate_score_clips(infos, "LOCAUX", "VISITEUR", None, (1024, 640))
-    
-    screen_size = (250, 60)
-    final_clip = (
-        mpy.CompositeVideoClip(
-            clips, 
-            size=screen_size)
-        .on_color(color=WHITE, col_opacity=1)
-        .set_duration(infos[-1][4])
-    )
-    final_clip.write_videofile("video_with_python.mp4", fps=10)
 
 class Recorder:
     def wait_for_points(self, ):
@@ -126,136 +107,6 @@ class Recorder:
         
         return score
 
-class EventRecord:    
-    def __init__(self, points, team, time_in_seconds, quarter_time=None):
-        self.points = points
-        self.team = team
-        self.time_in_seconds = time_in_seconds
-        self.quarter_time = quarter_time
-        
-    def to_csv(self):
-        values = [str(self.points), self.team, str(self.time_in_seconds)]
-        if self.quarter_time:
-            values.append(str(self.quarter_time))
-        return ";".join(values)
-    
-    def from_csv(csv):
-        print(csv)
-        split = csv.split(";")
-        print(str(split) + " " + str(len(split)))
-        quarter = int(split[3]) if len(split) > 3 else None 
-        return EventRecord(int(split[0]), split[1], time_to_seconds(split[2]), quarter) 
-        
-class Score:
-    def __init__(self, team_a = 0, team_b = 0):
-        self.team_a = team_a
-        self.team_b = team_b
-        
-    def add(self, points, team):
-        if (team == "A"):
-            return Score(self.team_a+points, self.team_b)
-        else:
-            return Score(self.team_a, self.team_b+points)
-
-class MatchEvent:
-    def __init__(self, start_time, end_time):
-        self.start = start_time
-        self.end = end_time
-        self.quarter_time = None
-        self.points = None
-
-class MatchState:
-    def __init__(self, start, end, score, quarter_time):
-        self.start=start
-        self.end=end
-        self.score=score
-        self.quarter_time=quarter_time
-
-    def __str__(self) -> str:
-        return f"start={self.start}, end={self.end}, score={self.score}, quarter_time={self.quarter_time}"
-
-def read_content_of_file(file): 
-    with open(file, "r") as input_file:
-        return input_file.readlines()
-    
-class MatchPart:
-    def build_from_csv(csv_file, score=Score(0,0)):
-        content = read_content_of_file(csv_file)
-        events = [EventRecord.from_csv(line) for line in content]
-            
-        return MatchPart(0, 0, events, score)
-    
-    def __init__(self, start_time, end_time, events, score=Score(0,0)):
-        self.start = start_time
-        self.end = end_time
-        self.events = events
-        self.initial_score = score
-        
-    def states(self):
-        initial_state = MatchState(0, 0, self.initial_score, None)
-        states = []
-        current_state = initial_state
-        for event in self.events:
-            current_state.end = event.time_in_seconds
-            states.append(current_state)
-
-            current_state = MatchState(current_state.end, current_state.end, current_state.score.add(event.points, event.team) , event.quarter_time)
-        return states 
-        
-class EventFile:
-    
-    def extract_lines_infos(self, lines, a, b, initial_start_time):
-        infos = []
-        score = Score(a, b)
-        start_time = initial_start_time
-        for line in lines:
-            record = EventRecord.from_csv(line)
-            points = record.points
-            team = record.team
-            end_time = record.time_in_seconds + initial_start_time
-            
-            infos.append((a, b, start_time, end_time))
-                       
-            score = score.add(points, team)
-            a = score.team_a
-            b = score.team_b
-            start_time = end_time
-                
-        return infos
-
-    def extract_match_events(self, lines, initial_score=Score(0,0)) -> MatchPart:
-        start_time = 0
-        end_time = 0
-        events = []
-        for line in lines:
-            record = EventRecord.from_csv(line)
-            end_time = record.time_in_seconds
-            events.append(record)
-            start_time = end_time
-        
-        return MatchPart(0, end_time, events, score=initial_score)
-    
-    # Generate information to insert in the video
-    def extract_infos(self, input_name, a, b, start_time=0):
-        infos=[]
-        with open(input_name, "r") as input_file:
-            lines = input_file.readlines()
-            return self.extract_lines_infos(lines, a, b, start_time)
-    
-def time_to_seconds(time):
-    seconds = re.match(r"(\d+)s?$", time)
-    if seconds:
-        return int(seconds[1])
-    
-    minutes_seconds = re.match(r"(\d+):(\d+)$", time)
-    if minutes_seconds:
-        return int(minutes_seconds[1])*60+int(minutes_seconds[2])
-    
-    hours_minutes_seconds = re.match(r"(\d+):(\d+):(\d+)$", time)
-    if hours_minutes_seconds:
-        return int(hours_minutes_seconds[1])*3600+int(hours_minutes_seconds[2])*60+int(hours_minutes_seconds[3])
-    
-
 def create_text_clip(text, font_size, color):
     return mpy.TextClip(
                 text,
@@ -266,7 +117,7 @@ def create_text_clip(text, font_size, color):
             )
 
 # Generate score and logo to display
-def generate_score_clips(infos, team_a, team_b, quarter_time, size):
+def generate_score_clips(states, team_a, team_b, quarter_time, size):
     score_font_size = 50
     
     def position_left_from(clip, clip_from, margin_x, margin_y=0):
@@ -288,7 +139,16 @@ def generate_score_clips(infos, team_a, team_b, quarter_time, size):
         .resize(width=80)
 
     all_clips = [sb_logo]
-    for (a,b,start_time,end_time) in infos:
+    
+    
+    for state in states:
+        a = state.score.team_a
+        b = state.score.team_b
+        start_time = state.start
+        end_time = state.end
+        print(f">>>>>>>>>>> {start_time} -> {end_time}")
+        
+    # for (a,b,start_time,end_time) in infos:
         clips = []
         print(f"{start_time} -> {end_time}")
         separator_clip = center(create_score_clip("-"), size)
@@ -328,13 +188,12 @@ def generate_score_clips(infos, team_a, team_b, quarter_time, size):
 
 def generate_from_dir(csv_folder, video_folder, output_folder, team_a, team_b):
     files = glob.glob(f'{video_folder}/*.mp4')
-    a=0
-    b=0
     files.sort()
+    score=Score(0,0)
     for file in files:
         print(f"Compute {file}")
         filename=re.sub(r"\.mp4$", "", os.path.basename(file))
-        (a,b) = generate_from_video(filename, csv_folder, video_folder, output_folder, a, b, team_a, team_b)
+        score = generate_from_video(filename, csv_folder, video_folder, output_folder, team_a, team_b, score)
    
 # Get information from the file and insert the score to the video.
 # Info should be in file [csv_folder]/[filename].csv.
@@ -345,26 +204,26 @@ def generate_from_dir(csv_folder, video_folder, output_folder, team_a, team_b):
 #
 # If the output file already exists, is not regenerated 
 # so we can stop the process and relaunch it to continue the execution.
-def generate_from_video(filename, csv_folder, video_folder, output_folder, a, b, team_a, team_b):
+def generate_from_video(filename, csv_folder, video_folder, output_folder, team_a, team_b, score=Score(0,0)):
 
     clip_filename = f"{video_folder}/{filename}.mp4"
     print(f"    Video: {clip_filename}")  
     video_clip = mpy.VideoFileClip(clip_filename)
     screen_size = video_clip.size
     duration = video_clip.duration
+    print(f"    Duration: {duration}s")
     
     clips = [video_clip]
     
     csv_file=f"{csv_folder}/{filename}.csv" 
     print(f"    CSV: {csv_file}")  
+    
     if os.path.isfile(csv_file):
-        infos=EventFile().extract_infos(f"{csv_file}", a, b)
-        print(f"{infos}")
-        # Align end of infos with the video duration.
-        last_info = infos[-1]
-        infos[-1] = (last_info[0], last_info[1], last_info[2], duration)
-        clips += generate_score_clips(infos, team_a, team_b, None, screen_size)
-        (a,b,_,_) = infos[-1]
+        match_part = MatchPart.build_from_csv(csv_file, score)
+        states = match_part.states(duration)
+        clips += generate_score_clips(states, team_a, team_b, None, screen_size)
+        
+        score = match_part.final_score()
     else:
         print("    No csv file")
     
@@ -379,14 +238,13 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, a, b,
     print(f"    Output video: {output_file}")
     # Do not generate when the output file already exists
     if not os.path.isfile(output_file):
-        pass
         # preset values: ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow,
         final_clip.write_videofile(output_file, threads=8, preset="veryfast", fps=None)
     else:
         print(f"File {output_file} already exists. It's not regenerated")
     
-    print(f"    Points A: {a} B: {b}")
-    return (a,b)
+    print(f"    Final score: {score}")  
+    return score
 
 def OLD_concat_file(folder, pattern="*.output.mp4", output_filename="full.mp4"):
     files = glob.glob(f'{folder}/{pattern}')
@@ -610,7 +468,6 @@ if __name__ == "__main__":
     if len(args) == 1:
         unittest.main()
     elif args[1] == "spike":
-        #generate_test_video()
         #ffmpeg_concat_file("short")
         print(match.display_score())
         

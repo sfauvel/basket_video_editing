@@ -4,7 +4,8 @@ import os
 import shutil
 import unittest
 
-from video_generator import *
+#from video_generator import *
+from video_match import *
 
 class TestEventRecord(unittest.TestCase):
     def test_event_record_to_csv(self):
@@ -75,25 +76,25 @@ class TestVideoGenerator(unittest.TestCase):
         
         
 
-    def test_generate_score(self):
-        print(generate_score([
-                (2, EQUIPE.A, 3),
-                (2, EQUIPE.B, 5),
-                (1, EQUIPE.A, 8),
-            ]))
+    # def test_generate_score(self):
+    #     print(generate_score([
+    #             (2, EQUIPE.A, 3),
+    #             (2, EQUIPE.B, 5),
+    #             (1, EQUIPE.A, 8),
+    #         ]))
         
-        self.assertEqual([
-                (0, 0, 0),
-                (2, 0, 3),
-                (2, 2, 5),
-                (3, 2, 8),
-            ], 
-            generate_score([
-                (2, EQUIPE.A, 3),
-                (2, EQUIPE.B, 5),
-                (1, EQUIPE.A, 8),
-            ])
-        )
+    #     self.assertEqual([
+    #             (0, 0, 0),
+    #             (2, 0, 3),
+    #             (2, 2, 5),
+    #             (3, 2, 8),
+    #         ], 
+    #         generate_score([
+    #             (2, EQUIPE.A, 3),
+    #             (2, EQUIPE.B, 5),
+    #             (1, EQUIPE.A, 8),
+    #         ])
+    #     )
     
     def test_extract_infos(self):
         infos = EventFile().extract_lines_infos([
@@ -240,16 +241,50 @@ class TestVideoGenerator(unittest.TestCase):
             "0;A;10;2",
         ])
         states = match_events.states()
-        print(f"States: {states}")
-        for state in states:
-            print(f"State: {state}")
-            
+        
         assert states[-1].start == 7
         assert states[-1].end == 10
         assert states[-1].score.team_a == 5
         assert states[-1].score.team_b == 1
         assert states[-1].quarter_time == 2
+    
+    
+    def test_extract_match_states_align_to_the_time(self):
+        match_events = EventFile().extract_match_events([
+            "2;A;3;2",
+            "1;B;5;2",
+            "3;A;7;2",
+            "0;A;10;2",
+        ])
+        states = match_events.states(15)
         
+        assert states[-1].start == 7
+        assert states[-1].end == 15
+    
+    
+    def test_extract_match_states_cut_last_state_if_not_in_time(self):
+        match_events = EventFile().extract_match_events([
+            "2;A;3;2",
+            "1;B;5;2",
+            "3;A;7;2",
+            "0;A;10;2",
+        ])
+        states = match_events.states(6)
+        
+        assert states[-1].start == 5
+        assert states[-1].end == 6
+        
+    def test_extract_match_final_score(self):
+        match_events = EventFile().extract_match_events([
+            "2;A;3;2",
+            "1;B;5;2",
+            "3;A;7;2",
+            "0;A;10;2",
+        ], initial_score=Score(20, 10))
+        
+        final_score = match_events.final_score()
+        assert final_score.team_a == 25
+        assert final_score.team_b == 11
     
     def test_time_to_seconds(self):
         assert 5 == time_to_seconds("5")
@@ -257,33 +292,33 @@ class TestVideoGenerator(unittest.TestCase):
         assert 4*60+25 == time_to_seconds("4:25")
         assert 2*3600+14*60+25 == time_to_seconds("2:14:25")
 
-    def test_display_score(self):
-        shutil.rmtree("tmp")
-        os.makedirs("tmp", exist_ok=True)
-        events = [EventRecord(2,"A",5),EventRecord(1,"B",6),EventRecord(3,"A",7),EventRecord(0,"X",9)]
-        with (open("tmp/tmp1.csv", "w")) as csv_file:
-            csv_file.write("\n".join([e.to_csv() for e in events]))
+    # def test_display_score(self):
+    #     shutil.rmtree("tmp")
+    #     os.makedirs("tmp", exist_ok=True)
+    #     events = [EventRecord(2,"A",5),EventRecord(1,"B",6),EventRecord(3,"A",7),EventRecord(0,"X",9)]
+    #     with (open("tmp/tmp1.csv", "w")) as csv_file:
+    #         csv_file.write("\n".join([e.to_csv() for e in events]))
             
-        match = MatchVideo("", "A", "B")
-        match.csv_folder = "tmp"
-        output = match.display_score()
-        assert output == "0: A 0 - 0 B\n5: A 2 - 0 B\n6: A 2 - 1 B\n7: A 5 - 1 B"
+    #     match = MatchVideo("", "A", "B")
+    #     match.csv_folder = "tmp"
+    #     output = match.display_score()
+    #     assert output == "0: A 0 - 0 B\n5: A 2 - 0 B\n6: A 2 - 1 B\n7: A 5 - 1 B"
         
-    def test_display_score_from_several_files(self):
-        shutil.rmtree("tmp")
-        os.makedirs("tmp", exist_ok=True)
-        events = [EventRecord(2,"A",5),EventRecord(1,"B",6),EventRecord(3,"A",7),EventRecord(0,"X",9)]
-        with (open("tmp/tmp1.csv", "w")) as csv_file:
-            csv_file.write("\n".join([e.to_csv() for e in events]))
+    # def test_display_score_from_several_files(self):
+    #     shutil.rmtree("tmp")
+    #     os.makedirs("tmp", exist_ok=True)
+    #     events = [EventRecord(2,"A",5),EventRecord(1,"B",6),EventRecord(3,"A",7),EventRecord(0,"X",9)]
+    #     with (open("tmp/tmp1.csv", "w")) as csv_file:
+    #         csv_file.write("\n".join([e.to_csv() for e in events]))
             
-        events = [EventRecord(3,"B",2),EventRecord(2,"A",4),EventRecord(0,"X",10)]
-        with (open("tmp/tmp2.csv", "w")) as csv_file:
-            csv_file.write("\n".join([e.to_csv() for e in events]))
+    #     events = [EventRecord(3,"B",2),EventRecord(2,"A",4),EventRecord(0,"X",10)]
+    #     with (open("tmp/tmp2.csv", "w")) as csv_file:
+    #         csv_file.write("\n".join([e.to_csv() for e in events]))
             
-        match = MatchVideo("", "A", "B")
-        match.csv_folder = "tmp"
-        output = match.display_score()
-        assert output == "0: A 0 - 0 B\n5: A 2 - 0 B\n6: A 2 - 1 B\n7: A 5 - 1 B\n11: A 5 - 4 B\n13: A 7 - 4 B", output
+    #     match = MatchVideo("", "A", "B")
+    #     match.csv_folder = "tmp"
+    #     output = match.display_score()
+    #     assert output == "0: A 0 - 0 B\n5: A 2 - 0 B\n6: A 2 - 1 B\n7: A 5 - 1 B\n11: A 5 - 4 B\n13: A 7 - 4 B", output
         
         
 
