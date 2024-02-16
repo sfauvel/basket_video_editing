@@ -74,28 +74,6 @@ class TestVideoGenerator(unittest.TestCase):
         assert states[1].score.team_a == 7
         assert states[1].score.team_b == 3
         
-        
-
-    # def test_generate_score(self):
-    #     print(generate_score([
-    #             (2, EQUIPE.A, 3),
-    #             (2, EQUIPE.B, 5),
-    #             (1, EQUIPE.A, 8),
-    #         ]))
-        
-    #     self.assertEqual([
-    #             (0, 0, 0),
-    #             (2, 0, 3),
-    #             (2, 2, 5),
-    #             (3, 2, 8),
-    #         ], 
-    #         generate_score([
-    #             (2, EQUIPE.A, 3),
-    #             (2, EQUIPE.B, 5),
-    #             (1, EQUIPE.A, 8),
-    #         ])
-    #     )
-    
     def test_extract_infos(self):
         infos = EventFile().extract_lines_infos([
             "2;A;3",

@@ -1,7 +1,6 @@
 
 
 from datetime import timedelta, datetime
-from enum import Enum
 import glob
 import os
 import re
@@ -9,36 +8,12 @@ import sys
 
 import moviepy.editor as mpy
 from moviepy.video import fx
-from moviepy.video.tools.segmenting import findObjects
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 
 from video_match import *
 
-WHITE = (255, 255, 255)
-# SCREEN_SIZE = (640, 50)
-SCREEN_SIZE = (250, 30)
-
 SB_LOGO_PATH = "./SBL_Logo_OK_light.jpg"
-
-class EQUIPE(Enum):
-    A=1,
-    B=2,
-    
-def generate_score(points):
-    a=0
-    b=0
-    time=0
-    score_evolution = [(a,b,time)]
-    for point in points:
-        if point[1] == EQUIPE.A:
-            a += point[0]
-        else:
-            b += point[0]
-        time = point[2]
-        score_evolution.append((a,b,time))
-    return score_evolution
-
 
 class Recorder:
     def wait_for_points(self, ):
@@ -204,28 +179,24 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, team_
     
     csv_file=f"{csv_folder}/{filename}.csv" 
     print(f"    CSV: {csv_file}")  
-    
     if os.path.isfile(csv_file):
         match_part = MatchPart.build_from_csv(csv_file, score)
         states = match_part.states(duration)
         clips += generate_score_clips(states, team_a, team_b, None, screen_size)
-        
         score = match_part.final_score()
     else:
         print("    No csv file")
     
-    final_clip = (
-        mpy.CompositeVideoClip(
-            clips, 
-            size=screen_size,
-        )
-        .set_duration(duration)  # start of the last clip which is the end
-    )
     output_file=f"{output_folder}/{filename}.output.mp4"
     print(f"    Output video: {output_file}")
     print(f"    Final score: {score}")  
+    
     # Do not generate when the output file already exists
     if not os.path.isfile(output_file):
+        final_clip = mpy.CompositeVideoClip(
+            clips, 
+            size=screen_size,
+        ).set_duration(duration)
         # preset values: ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow,
         final_clip.write_videofile(output_file, threads=8, preset="veryfast", fps=None)
     else:
