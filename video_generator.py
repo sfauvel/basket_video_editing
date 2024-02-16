@@ -142,22 +142,14 @@ def generate_score_clips(states, team_a, team_b, quarter_time, size):
     
     
     for state in states:
-        a = state.score.team_a
-        b = state.score.team_b
-        start_time = state.start
-        end_time = state.end
-        print(f">>>>>>>>>>> {start_time} -> {end_time}")
-        
-    # for (a,b,start_time,end_time) in infos:
         clips = []
-        print(f"{start_time} -> {end_time}")
         separator_clip = center(create_score_clip("-"), size)
         clips.append(separator_clip)
         
-        score_a_clip = position_left_from(create_score_clip(f"{a}"), separator_clip, 10)
+        score_a_clip = position_left_from(create_score_clip(f"{state.score.team_a}"), separator_clip, 10)
         clips.append(score_a_clip)
         
-        score_b_clip = position_right_from(create_score_clip(f"{b}"), separator_clip, 10)
+        score_b_clip = position_right_from(create_score_clip(f"{state.score.team_b}"), separator_clip, 10)
         clips.append(score_b_clip)
         
         # Should be compute with score_a_clip width with value 100
@@ -173,16 +165,12 @@ def generate_score_clips(states, team_a, team_b, quarter_time, size):
         team_b_clip = position_right_from(team_b_clip, separator_clip, delta_x_label, delta_y_label)
         clips.append(team_b_clip)
         
-        if quarter_time != None:
-            quarter_clip = create_text_clip(quarter_time, font_size=20, color="White")
+        if state.quarter_time != None:
+            quarter_clip = create_text_clip(str(state.quarter_time), font_size=20, color="White")
             quarter_clip = quarter_clip.set_position((size[0]/2-quarter_clip.size[0]/2, 0))
             clips.append(quarter_clip)
             
-            
-        def clip_with_time(clip):
-            return clip.set_start(start_time).set_end(end_time)
-        
-        all_clips += [clip_with_time(clip) for clip in clips]
+        all_clips += [clip.set_start(state.start).set_end(state.end) for clip in clips]
     
     return all_clips
 
@@ -191,7 +179,6 @@ def generate_from_dir(csv_folder, video_folder, output_folder, team_a, team_b):
     files.sort()
     score=Score(0,0)
     for file in files:
-        print(f"Compute {file}")
         filename=re.sub(r"\.mp4$", "", os.path.basename(file))
         score = generate_from_video(filename, csv_folder, video_folder, output_folder, team_a, team_b, score)
    
@@ -236,6 +223,7 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, team_
     )
     output_file=f"{output_folder}/{filename}.output.mp4"
     print(f"    Output video: {output_file}")
+    print(f"    Final score: {score}")  
     # Do not generate when the output file already exists
     if not os.path.isfile(output_file):
         # preset values: ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow,
@@ -243,7 +231,6 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, team_
     else:
         print(f"File {output_file} already exists. It's not regenerated")
     
-    print(f"    Final score: {score}")  
     return score
 
 def OLD_concat_file(folder, pattern="*.output.mp4", output_filename="full.mp4"):

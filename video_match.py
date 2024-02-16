@@ -34,9 +34,7 @@ class EventRecord:
         return ";".join(values)
     
     def from_csv(csv):
-        print(csv)
         split = csv.split(";")
-        print(str(split) + " " + str(len(split)))
         quarter = int(split[3]) if len(split) > 3 else None 
         return EventRecord(int(split[0]), split[1], time_to_seconds(split[2]), quarter) 
 
