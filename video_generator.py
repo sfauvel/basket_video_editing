@@ -2,6 +2,7 @@
 
 
 import glob
+import math
 import os
 import re
 import sys
@@ -126,6 +127,7 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, team_
     else:
         print("    No csv file")
     
+    os.makedirs(output_folder, exist_ok=True)
     output_file=f"{output_folder}/{filename}.output.mp4"
     print(f"    Output video: {output_file}")
     print(f"    Final score: {score}")  
@@ -143,39 +145,17 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, team_
     
     return score
 
-def OLD_concat_file(folder, pattern="*.output.mp4", output_filename="full.mp4"):
-    clips=[]
-    padding=1
-    fade_color=(30,30,30)
-    for file in files_sorted(f'{folder}/{pattern}'):
-        print(file)
-        clip = mpy.VideoFileClip(file)
-        clip=fx.all.fadeout(clip, padding, final_color=fade_color)
-        clip=fx.all.fadein(clip, padding, initial_color=fade_color)        
-        clips.append(clip)
     
-    # clips = clips[0:2]
-    # print("Only 2 videos for test!!!")
-    print(f"nb clips: {len(clips)}")
-    # Do we need method=compose ?
-    final_clip = mpy.concatenate_videoclips(clips, method="compose")
-    final_clip.write_videofile(f"{folder}/{output_filename}", threads=8, preset="veryfast", fps=None)
-    
-    
-def concat_file(folder, pattern="*.output.mp4", output_filename="full.mp4"):
-
-    original_dir = os.getcwd()
-    os.chdir(folder)
-    files = files_sorted(pattern)
-    with open(f"file_list.txt", "w") as file_list_file:
+def concat_file(folder, files, output_filename="full.mp4"): 
+    print(files)
+    with open(f"{folder}/file_list.txt", "w") as file_list_file:
         file_list_file.write("\n".join([f"file '{filename}'" for filename in files]))
   
     print(f"Output: {output_filename}")
-    prog = f'ffmpeg -f concat -i file_list.txt -c copy {output_filename}'
+    prog = f'ffmpeg -f concat -i {folder}/file_list.txt -c copy {folder}/{output_filename}'
     print(prog)
     os.system(prog)
-    os.chdir(original_dir)
-
+    
     # ffmpeg -ss [start time] -t [duration] -i [input file] -c copy [output file]ffmpeg -ss [start time] -t [duration] -i [input file] -c copy [output file]
     #ffmpeg -ss 3 -i [input file] -c copy output.mp4
     
@@ -243,49 +223,6 @@ def higlights(csv_folder, video_folder, output_folder):
     clip = mpy.CompositeVideoClip(clips)   
     clip.write_videofile(f"{output_folder}/highlight.mp4", threads=8, preset="veryfast")
 
-def audio_analyze(filename):       
-    # 1000/s
-    # audio_fps / 10 => audio_fpms
-    audio_fpms = 100
-    audio_fps = audio_fpms * 10
-    video_clip = mpy.VideoFileClip(filename, audio_fps=audio_fps)
-    # 10s => 441000 values
-    # audio_fps = 44100 by default
-    # with audio_fps=10000 => 1000 values/s => 100 values/ms
-
-    audio_clip = video_clip.audio
-    # print(audioclip)
-    # audio_array = audioclip.to_soundarray()
-    #print(audio_array)
-    
-    # Extract the audio as a list of samples
-    audio_samples = list(audio_clip.iter_frames())
-    import numpy
-    # Convert the list of samples to a NumPy array
-    sound_array = numpy.array(audio_samples)
-    print(len(sound_array))
-    
-    import datetime
-    for time_ms in range(0, int(video_clip.duration*1000), 100):
-        max_value = max([value for (value, _) in sound_array[time_ms:time_ms+audio_fpms]])
-        if max_value > 0.2:
-            date_time = datetime.datetime.fromtimestamp(time_ms/1000.0)
-            print(date_time.strftime("%H:%M:%S") + " {:.1f}".format(time_ms/1000) + ": " + "{:.3f}".format(max_value) + ("" if max_value < 0.6 else " ***"))
-        
-    # for (index, sound) in enumerate(sound_array[:-audio_fpms]):        
-    #     max_value = max([value for (value, _) in sound_array[index:index+audio_fpms]])
-    #    # print(sound_array[index:index+99])
-    #     print(f"{index}: \t" + "{:.2f}".format(sound[0]) + "\t" + "{:.2f}".format(sound[1]) + "\t" + str(max_value))
-        
-        
-    max_volume = audio_clip.max_volume()
-    print(f"Max volume: {max_volume}")
-    max_volume = max([value for (value, _) in sound_array])
-    print(f"Max volume: {max_volume}")
-    max_volume = max([value for (_, value) in sound_array])
-    print(f"Max volume: {max_volume}")
-      
-
 class MatchVideo:
     def __init__(self, root_folder, team_a="LOCAUX", team_b="VISITEUR"):
         self.root_folder = root_folder
@@ -306,7 +243,49 @@ class MatchVideo:
             team_a=self.team_a, 
             team_b=self.team_b,
         )
-        concat_file(folder=self.output_folder)
+        
+    def create_single_video(self):
+        pattern="*.output.mp4"
+        files = [file.split('/')[-1] for file in files_sorted(f"{self.output_folder}/{pattern}")]
+    
+        concat_file(self.output_folder, files, "match_complet.mp4")
+        
+    def create_single_by_quarter(self):
+        compute_key = lambda quarter: quarter
+        
+        all_files = self.split_by_quarter(compute_key)
+    
+        for (key, files) in all_files.items():
+            concat_file(self.output_folder, files, f"quart_temps_{key}.mp4")
+    
+    def create_single_by_halftime(self):
+        compute_key = lambda quarter: math.ceil(quarter / 2)
+        
+        all_files = self.split_by_quarter(compute_key)
+       
+        for (key, files) in all_files.items(): 
+            concat_file(self.output_folder, files, f"mi_temps_{key}.mp4")
+            
+    def split_by_quarter(self, compute_key):
+        pattern="*.output.mp4"
+        files = [file.split('/')[-1] for file in files_sorted(f"{self.output_folder}/{pattern}")]
+      
+        all_files = {}
+        for file in files:
+            filename=os.path.basename(file).replace(".output.mp4", "")
+            csv_file=f"{self.csv_folder}/{filename}.csv"
+            if os.path.isfile(csv_file):
+                match = MatchPart.build_from_csv(csv_file)
+                quarter = match.events[0].quarter_time
+                
+                key = compute_key(quarter)
+                if not key in all_files:
+                    all_files[key] = []
+                all_files[key].append(file)
+            else:
+                print(f"Csv file '{csv_file}' does not exists")
+                
+        return all_files
         
     def highlight(self):
         higlights(self.csv_folder, self.output_folder, self.root_folder)
@@ -329,14 +308,10 @@ class MatchVideo:
         return output
     
 if __name__ == "__main__":
-    # Launch without arguments to run tests.
-    # add `run` argument to launch program.
     args = sys.argv
     folder = args[2] if len(args) > 2 else "Match"
     match = MatchVideo(folder, "SLB", "USCB")
-    if len(args) == 1:
-        unittest.main()
-    elif args[1] == "spike":
+    if args[1] == "spike":
         #ffmpeg_concat_file("short")
         print(match.display_score())
         
@@ -357,22 +332,35 @@ if __name__ == "__main__":
         # Compress with direct write_videofile fps=24, medium: 473.6.8mo
         #audio_analyze("Match_2024_02_04/output/VID_20240204_110324.output.mp4")
     elif args[1] == "record":
-        Recorder().record_input("tmp/output.csv")    
+        Recorder().record_input("tmp/output.csv")
+        
     elif args[1] == "generate":
-        #spike("VID_20240204_105730")
-        generate_from_dir("short", "short", "short", team_a="SLB", team_b="VISITOR")
+        match.generate()
+        
     elif args[1] == "concat":
         concat_file("short")
+        
     elif args[1] == "compress":
         # compress("/media/sfauvel/USB DISK1/Match_2024_02_04/VID_20240204_105730.mp4")
         compress("short/full.output.mp4", output_file="short/compress.output.mp4")
-    elif args[1] == "full":
-        folder = args[2] if len(args) > 2 else "Match"
-        MatchVideo(folder, "SLB", "USCB").generate()
-        #compress("short/full.mp4", output_file="short/compress.mp4")
+        
     elif args[1] == "highlight":
-        folder = args[2] if len(args) > 2 else "Match"
-        MatchVideo(folder, "SLB", "USCB").highlight()
+        match.highlight()
+        
+    elif args[1] == "quarter":
+        match.create_single_by_quarter()
+        
+    elif args[1] == "half":
+        match.create_single_by_halftime()
+        
+    elif args[1] == "all":
+        match.create_single_video()
+        
+    elif args[1] == "full":
+        match.generate()
+        match.highlight()
+        match.split_by_quarter()
+        
     else:
         print(f"Unrecognized command `{args[1]}`")
         

@@ -111,6 +111,22 @@ class TestVideoGenerator(unittest.TestCase):
         assert infos[0] == (5, 8, 10, 13), infos[0]
         assert infos[1] == (7, 8, 13, 18), infos[1]
 
+    def test_extract_match_events_can_read_event_without_team(self):
+        match_events = EventFile().extract_match_events([
+            "0;;0",
+            "2;A;3",
+            "1;B;5",
+            "3;A;7",
+            "0;;10",
+        ])
+        assert match_events.events[0].time_in_seconds == 0
+        assert match_events.events[0].points == 0
+        assert match_events.events[0].team == ""
+    
+        assert match_events.events[-1].time_in_seconds == 10
+        assert match_events.events[-1].points == 0
+        assert match_events.events[-1].team == ""
+
     def test_extract_match_events(self):
         match_events = EventFile().extract_match_events([
             "0;X;0",
