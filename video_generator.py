@@ -57,6 +57,7 @@ class Recorder:
         records=[]
        
         quarter = self.ask_quarter()
+        records.append(EventRecord(0, "X", 0, quarter))
                 
         while True:
             print("Tapez 'ENTRER' au prochain panier ou 'e' pour finir...")
@@ -80,6 +81,7 @@ class Recorder:
         with open(filename, "w") as output_file:
             output_file.write(output)
         
+        print(f"File {filename} generated")
         return score
 
 def create_text_clip(text, font_size, color):
@@ -91,23 +93,38 @@ def create_text_clip(text, font_size, color):
                 fontsize=font_size,
             )
 
+def position_left_from(clip, clip_from, margin_x, margin_y=0):
+    from_right_pos = clip_from.pos(0)[0]
+    return clip.set_position((from_right_pos-clip.size[0]-margin_x, margin_y))
+
+def position_right_from(clip, clip_from, margin_x, margin_y=0):
+    from_left_pos = clip_from.pos(0)[0]+clip_from.size[0]
+    return clip.set_position((from_left_pos+margin_x, margin_y))
+
+def center(clip, video_size):
+    return clip.set_position((video_size[0]/2-clip.size[0]/2, 0))
+    
+def create_score_clip(text):
+    return create_text_clip(text, font_size=SCORE_FONT_SIZE, color="Yellow")
+    
+def create_team_names(team_a, team_b, separator_clip):
+     # Should be compute with score_a_clip width with value 100
+    team_font_size = 40
+    delta_x_label = 140
+    delta_y_label = SCORE_FONT_SIZE-team_font_size
+    
+    team_a_clip = create_text_clip(team_a, font_size=team_font_size, color="White")
+    team_a_clip = position_left_from(team_a_clip, separator_clip, delta_x_label, delta_y_label)
+    
+    team_b_clip = create_text_clip(team_b, font_size=team_font_size, color="White")
+    team_b_clip = position_right_from(team_b_clip, separator_clip, delta_x_label, delta_y_label)
+    
+    return [team_a_clip, team_b_clip]
+       
+    
 # Generate score and logo to display
-def generate_score_clips(states, team_a, team_b, quarter_time, size):
-    score_font_size = 50
-    
-    def position_left_from(clip, clip_from, margin_x, margin_y=0):
-        from_right_pos = clip_from.pos(0)[0]
-        return clip.set_position((from_right_pos-clip.size[0]-margin_x, margin_y))
-    
-    def position_right_from(clip, clip_from, margin_x, margin_y=0):
-        from_left_pos = clip_from.pos(0)[0]+clip_from.size[0]
-        return clip.set_position((from_left_pos+margin_x, margin_y))
-    
-    def center(clip, video_size):
-        return clip.set_position((video_size[0]/2-clip.size[0]/2, 0))
-        
-    def create_score_clip(text):
-        return create_text_clip(text, font_size=score_font_size, color="Yellow")
+SCORE_FONT_SIZE = 50
+def generate_score_clips(states, team_a, team_b, size):
         
     sb_logo = mpy.ImageClip(SB_LOGO_PATH)\
         .set_position(('left', 0))\
@@ -127,18 +144,7 @@ def generate_score_clips(states, team_a, team_b, quarter_time, size):
         score_b_clip = position_right_from(create_score_clip(f"{state.score.team_b}"), separator_clip, 10)
         clips.append(score_b_clip)
         
-        # Should be compute with score_a_clip width with value 100
-        team_font_size = 40
-        delta_x_label = 140
-        delta_y_label = score_font_size-team_font_size
-        
-        team_a_clip = create_text_clip(team_a, font_size=team_font_size, color="White")
-        team_a_clip = position_left_from(team_a_clip, separator_clip, delta_x_label, delta_y_label)
-        clips.append(team_a_clip)
-        
-        team_b_clip = create_text_clip(team_b, font_size=team_font_size, color="White")
-        team_b_clip = position_right_from(team_b_clip, separator_clip, delta_x_label, delta_y_label)
-        clips.append(team_b_clip)
+        clips += create_team_names(team_a, team_b, separator_clip)
         
         if state.quarter_time != None:
             quarter_clip = create_text_clip(str(state.quarter_time), font_size=20, color="White")
@@ -182,7 +188,7 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, team_
     if os.path.isfile(csv_file):
         match_part = MatchPart.build_from_csv(csv_file, score)
         states = match_part.states(duration)
-        clips += generate_score_clips(states, team_a, team_b, None, screen_size)
+        clips += generate_score_clips(states, team_a, team_b, screen_size)
         score = match_part.final_score()
     else:
         print("    No csv file")
