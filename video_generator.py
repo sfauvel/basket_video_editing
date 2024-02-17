@@ -14,7 +14,8 @@ from video_match import *
 from video_recorder import *
 
 SB_LOGO_PATH = "./SBL_Logo_OK_light.jpg"
-
+SCORE_FONT_SIZE = 50
+TEAM_FONT_SIZE = 40
 
 def create_text_clip(text, font_size, color):
     return mpy.TextClip(
@@ -41,21 +42,19 @@ def create_score_clip(text):
     
 def create_team_names(team_a, team_b, separator_clip):
      # Should be compute with score_a_clip width with value 100
-    team_font_size = 40
     delta_x_label = 140
-    delta_y_label = SCORE_FONT_SIZE-team_font_size
+    delta_y_label = SCORE_FONT_SIZE-TEAM_FONT_SIZE
     
-    team_a_clip = create_text_clip(team_a, font_size=team_font_size, color="White")
+    team_a_clip = create_text_clip(team_a, font_size=TEAM_FONT_SIZE, color="White")
     team_a_clip = position_left_from(team_a_clip, separator_clip, delta_x_label, delta_y_label)
     
-    team_b_clip = create_text_clip(team_b, font_size=team_font_size, color="White")
+    team_b_clip = create_text_clip(team_b, font_size=TEAM_FONT_SIZE, color="White")
     team_b_clip = position_right_from(team_b_clip, separator_clip, delta_x_label, delta_y_label)
     
     return [team_a_clip, team_b_clip]
        
     
 # Generate score and logo to display
-SCORE_FONT_SIZE = 50
 def generate_score_clips(states, team_a, team_b, size):
         
     sb_logo = mpy.ImageClip(SB_LOGO_PATH)\
@@ -63,7 +62,6 @@ def generate_score_clips(states, team_a, team_b, size):
         .resize(width=80)
 
     all_clips = [sb_logo]
-    
     
     for state in states:
         clips = []
@@ -87,11 +85,14 @@ def generate_score_clips(states, team_a, team_b, size):
     
     return all_clips
 
-def generate_from_dir(csv_folder, video_folder, output_folder, team_a, team_b):
-    files = glob.glob(f'{video_folder}/*.mp4')
+def files_sorted(pattern):
+    files = glob.glob(pattern)
     files.sort()
+    return files 
+
+def generate_from_dir(csv_folder, video_folder, output_folder, team_a, team_b):
     score=Score(0,0)
-    for file in files:
+    for file in files_sorted(f'{video_folder}/*.mp4'):
         filename=re.sub(r"\.mp4$", "", os.path.basename(file))
         score = generate_from_video(filename, csv_folder, video_folder, output_folder, team_a, team_b, score)
    
@@ -143,12 +144,10 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, team_
     return score
 
 def OLD_concat_file(folder, pattern="*.output.mp4", output_filename="full.mp4"):
-    files = glob.glob(f'{folder}/{pattern}')
-    files.sort()
     clips=[]
     padding=1
     fade_color=(30,30,30)
-    for file in files:
+    for file in files_sorted(f'{folder}/{pattern}'):
         print(file)
         clip = mpy.VideoFileClip(file)
         clip=fx.all.fadeout(clip, padding, final_color=fade_color)
@@ -167,8 +166,7 @@ def concat_file(folder, pattern="*.output.mp4", output_filename="full.mp4"):
 
     original_dir = os.getcwd()
     os.chdir(folder)
-    files = glob.glob(f'{pattern}')
-    files.sort()
+    files = files_sorted(pattern)
     with open(f"file_list.txt", "w") as file_list_file:
         file_list_file.write("\n".join([f"file '{filename}'" for filename in files]))
   
@@ -229,9 +227,7 @@ def create_highights_clip(highlights, filename, clips):
 def higlights(csv_folder, video_folder, output_folder):    
     clips = []
     
-    files = glob.glob(f'{csv_folder}/*.csv')
-    files.sort()
-    for file in files:
+    for file in files_sorted(f'{csv_folder}/*.csv'):
         print(file)
         
         filename=os.path.basename(file).replace(".csv", "")
@@ -316,13 +312,11 @@ class MatchVideo:
         higlights(self.csv_folder, self.output_folder, self.root_folder)
     
     def display_score(self):
-        files = glob.glob(f'{self.csv_folder}/*.csv')
-        files.sort()
         score = Score()
         
         infos = [(self.format_score(score), score.team_a, score.team_b, 0, 0)]
         start_time = 0
-        for file in files:
+        for file in files_sorted(f'{self.csv_folder}/*.csv'):
             print(file)
             filename=os.path.basename(file).replace(".csv", "")
             extracted_infos = EventFile().extract_infos(f"{self.csv_folder}/{filename}.csv", score.team_a, score.team_b)

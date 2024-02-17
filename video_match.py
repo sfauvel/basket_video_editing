@@ -1,45 +1,9 @@
-import re
+from video_recorder import EventRecord
 
 def read_content_of_file(file): 
     with open(file, "r") as input_file:
         return input_file.readlines()
 
-def time_to_seconds(time):
-    seconds = re.match(r"(\d+)s?$", time)
-    if seconds:
-        return int(seconds[1])
-    
-    minutes_seconds = re.match(r"(\d+):(\d+)$", time)
-    if minutes_seconds:
-        return int(minutes_seconds[1])*60+int(minutes_seconds[2])
-    
-    hours_minutes_seconds = re.match(r"(\d+):(\d+):(\d+)$", time)
-    if hours_minutes_seconds:
-        return int(hours_minutes_seconds[1])*3600+int(hours_minutes_seconds[2])*60+int(hours_minutes_seconds[3])
-    
-
-"""Information from a record in csv file.
-"""
-class EventRecord:
-    def __init__(self, points, team, time_in_seconds, quarter_time=None):
-        self.points = points
-        self.team = team
-        self.time_in_seconds = time_in_seconds
-        self.quarter_time = quarter_time
-        
-    def to_csv(self):
-        values = [str(self.points), self.team, str(self.time_in_seconds)]
-        if self.quarter_time:
-            values.append(str(self.quarter_time))
-        return ";".join(values)
-    
-    def from_csv(csv):
-        split = csv.split(";")
-        quarter = int(split[3]) if len(split) > 3 else None 
-        return EventRecord(int(split[0]), split[1], time_to_seconds(split[2]), quarter) 
-
-    def __str__(self) -> str:
-        return f"points:{self.points}, team:{self.team}, time_in_seconds:{self.time_in_seconds}, quarter_time:{self.quarter_time}"
      
 class Score:
     def __init__(self, team_a = 0, team_b = 0):
