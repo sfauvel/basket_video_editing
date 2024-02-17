@@ -5,7 +5,9 @@ import shutil
 import unittest
 
 #from video_generator import *
+# from video_recorder import *
 from video_match import *
+
 
 class TestEventRecord(unittest.TestCase):
     def test_event_record_to_csv(self):

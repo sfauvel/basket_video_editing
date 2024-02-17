@@ -1,6 +1,6 @@
 
 
-from datetime import timedelta, datetime
+
 import glob
 import os
 import re
@@ -12,77 +12,10 @@ from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 
 from video_match import *
+from video_recorder import *
 
 SB_LOGO_PATH = "./SBL_Logo_OK_light.jpg"
 
-class Recorder:
-    def wait_for_points(self, ):
-        print("Entrez les points et l'équipe (exemple: 2a, 1a,...)")
-        x = input()
-        score = re.match(r'(\d)([a|b])', x)
-        while not score:
-            print("Erreur de saisie, retaper les points marqués (exemple: 2a, 1a,...)")
-            x = input()
-            score = re.match(r'(\d)([a|b])', x)
-
-        return (int(score[1]), score[2].upper())
-
-    def ask_quarter(self):
-        while True:
-            print("Entrer le numéro du quart-temps ou juste 'ENTRER'...")
-            quarter = input()
-            if quarter == "":
-                print("Aucun quart temps saisi")
-                return None
-            elif quarter.isdigit():
-                print(f"Quart temps: {quarter}")
-                return int(quarter)
-            print("Erreur de saisie!")
-        
-        
-
-    # Launch this method to record points scored during the game.
-    # Type 'Enter' to indicate that there is a point scored.
-    # After that indicate how many points and the team (example: 2a, 1b, ...)
-    # When the video is finished, type 'e' to exit.
-    # Tips: launch the video first and this program after so you always add the points after they are scored.
-    # The output file do not contains score to simplify correction. 
-    # You just have to add,remove or modify lines and there is nothing else to modify in the file.
-    # If you want to restart after the beginning ??? TODO restart a new file from the time to restart and pass a list of file that will be concatenated
-    def record_input(self, filename):
-
-        start_time = datetime.now()
-
-        score = Score()
-        records=[]
-       
-        quarter = self.ask_quarter()
-        records.append(EventRecord(0, "X", 0, quarter))
-                
-        while True:
-            print("Tapez 'ENTRER' au prochain panier ou 'e' pour finir...")
-            x = input()
-            
-            next_time = datetime.now()-start_time
-            if x == "e":
-                records.append(EventRecord(0, "X", round(timedelta.total_seconds(next_time)), quarter))
-                break
-
-            (points, team) = self.wait_for_points()
-            
-            score = score.add(points, team)
-
-            print(f'{team} +{points} => {score.team_a} - {score.team_b} | {str(next_time).split(".")[0]}')
-            records.append(EventRecord(points, team, round(timedelta.total_seconds(next_time)), quarter))
-        
-        print(f"Score final: {score.team_a} - {score.team_b}")
-        
-        output = "\n".join([r.to_csv() for r in records])
-        with open(filename, "w") as output_file:
-            output_file.write(output)
-        
-        print(f"File {filename} generated")
-        return score
 
 def create_text_clip(text, font_size, color):
     return mpy.TextClip(
@@ -314,23 +247,6 @@ def higlights(csv_folder, video_folder, output_folder):
             clip=fx.all.fadeout(clip, padding, final_color=fade_color)
             clip=fx.all.fadein(clip, padding, initial_color=fade_color)
             clips.append(clip)
-            
-            # for line in lines:
-            #     print(f"-- {line}")
-            #     # (points,team,time) = line.split(";")
-            #     # start = time_to_seconds(time)
-            #     (points,team,start) = extract_line_info(line)
-                
-            #     # 0 point at the end and we don't show 1 point.
-            #     if int(points) > 1 and team.upper() == "A":
-            #         print(f"Subclip {start-3} -> {start}")
-            #         duration_before = 7
-            #         duration_after = 1
-                    
-            #         clip = original_clip.subclip(start-duration_before, start+duration_after).set_start((duration_before+duration_after)*len(clips))
-            #         clip=fx.all.fadeout(clip, padding, final_color=fade_color)
-            #         clip=fx.all.fadein(clip, padding, initial_color=fade_color)
-            #         clips.append(clip)
   
         print(infos)
     clip = mpy.CompositeVideoClip(clips)   
