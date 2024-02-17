@@ -8,7 +8,6 @@ import sys
 
 import moviepy.editor as mpy
 from moviepy.video import fx
-from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 
 from video_match import *
@@ -151,7 +150,7 @@ def OLD_concat_file(folder, pattern="*.output.mp4", output_filename="full.mp4"):
     fade_color=(30,30,30)
     for file in files:
         print(file)
-        clip = VideoFileClip(file)
+        clip = mpy.VideoFileClip(file)
         clip=fx.all.fadeout(clip, padding, final_color=fade_color)
         clip=fx.all.fadein(clip, padding, initial_color=fade_color)        
         clips.append(clip)
@@ -160,7 +159,7 @@ def OLD_concat_file(folder, pattern="*.output.mp4", output_filename="full.mp4"):
     # print("Only 2 videos for test!!!")
     print(f"nb clips: {len(clips)}")
     # Do we need method=compose ?
-    final_clip = concatenate_videoclips(clips, method="compose")
+    final_clip = mpy.concatenate_videoclips(clips, method="compose")
     final_clip.write_videofile(f"{folder}/{output_filename}", threads=8, preset="veryfast", fps=None)
     
     
@@ -210,45 +209,41 @@ def compress(clip_filename, output_file="compress.mp4", preset="veryfast"):
         print("File {output_file} already exists. It's not regenerated")
         
     
-def higlights(csv_folder, video_folder, output_folder):
-    def extract_line_info(line):
-        #print(f"-- {line}")
-        (points,team,time) = line.split(";")
-        start = time_to_seconds(time)
-        return (points,team,start)
-    
-    
-    files = glob.glob(f'{csv_folder}/*.csv')
-    files.sort()
-    clips = []
-    
-    print(f"{csv_folder}, {video_folder}, {output_folder}")
+def create_highights_clip(highlights, filename, clips):
     
     padding=1
     fade_color=(30,30,30)
+    print(filename)
+    for highlight in highlights:
+        original_clip = mpy.VideoFileClip(filename) 
+        duration_before = 7
+        duration_after = 1
+        print(f"    Extract from {highlight.time_in_seconds-duration_before}s to {highlight.time_in_seconds+duration_after}s")
+        
+        clip = original_clip.subclip(highlight.time_in_seconds-duration_before, highlight.time_in_seconds+duration_after).set_start((duration_before+duration_after)*len(clips))
+        clip=fx.all.fadeout(clip, padding, final_color=fade_color)
+        clip=fx.all.fadein(clip, padding, initial_color=fade_color)
+        clips.append(clip)
+        
+  
+def higlights(csv_folder, video_folder, output_folder):    
+    clips = []
+    
+    files = glob.glob(f'{csv_folder}/*.csv')
+    files.sort()
     for file in files:
         print(file)
         
         filename=os.path.basename(file).replace(".csv", "")
                    
-        original_clip = VideoFileClip(f"{video_folder}/{filename}.output.mp4") 
-        infos=[]
-        with open(f"{csv_folder}/{filename}.csv", "r") as input_file:
-            lines = input_file.readlines()
-            infos = [extract_line_info(line) for line in lines]
-            infos = [(points,team,start) for (points,team,start) in infos if int(points) > 1 and team.upper() == "A"]
-            
-        for (points,team,start) in infos:
-            duration_before = 7
-            duration_after = 1
-            print(f"Subclip {start-duration_before} -> {start+duration_after}")
-            
-            clip = original_clip.subclip(start-duration_before, start+duration_after).set_start((duration_before+duration_after)*len(clips))
-            clip=fx.all.fadeout(clip, padding, final_color=fade_color)
-            clip=fx.all.fadein(clip, padding, initial_color=fade_color)
-            clips.append(clip)
-  
-        print(infos)
+        def is_highlight(event):
+            return int(event.points) > 1 and event.team.upper() == "A"
+                   
+        match = MatchPart.build_from_csv(f"{csv_folder}/{filename}.csv")
+        highlights = [event for event in match.events if is_highlight(event)]
+        
+        create_highights_clip(highlights, f"{video_folder}/{filename}.output.mp4", clips)
+        
     clip = mpy.CompositeVideoClip(clips)   
     clip.write_videofile(f"{output_folder}/highlight.mp4", threads=8, preset="veryfast")
 
@@ -257,7 +252,7 @@ def audio_analyze(filename):
     # audio_fps / 10 => audio_fpms
     audio_fpms = 100
     audio_fps = audio_fpms * 10
-    video_clip = VideoFileClip(filename, audio_fps=audio_fps)
+    video_clip = mpy.VideoFileClip(filename, audio_fps=audio_fps)
     # 10s => 441000 values
     # audio_fps = 44100 by default
     # with audio_fps=10000 => 1000 values/s => 100 values/ms

@@ -38,6 +38,8 @@ class EventRecord:
         quarter = int(split[3]) if len(split) > 3 else None 
         return EventRecord(int(split[0]), split[1], time_to_seconds(split[2]), quarter) 
 
+    def __str__(self) -> str:
+        return f"points:{self.points}, team:{self.team}, time_in_seconds:{self.time_in_seconds}, quarter_time:{self.quarter_time}"
      
 class Score:
     def __init__(self, team_a = 0, team_b = 0):
