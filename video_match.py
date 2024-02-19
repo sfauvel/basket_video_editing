@@ -115,6 +115,6 @@ class EventFile:
     def extract_infos(self, input_name, a, b, start_time=0):
         infos=[]
         with open(input_name, "r") as input_file:
-            lines = input_file.readlines()
+            lines = input_file.readlines()            
             return self.extract_lines_infos(lines, a, b, start_time)
     

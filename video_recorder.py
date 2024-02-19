@@ -4,18 +4,23 @@ from datetime import timedelta, datetime
 
 
 def time_to_seconds(time):
-    seconds = re.match(r"(\d+)s?$", time)
-    if seconds:
-        return int(seconds[1])
+  
+    result = re.match(r'^(\d)+:\d\d$', time)
+    if result == None:
+        raise Exception(f"Invalid time: '{time}'")
     
-    minutes_seconds = re.match(r"(\d+):(\d+)$", time)
-    if minutes_seconds:
-        return int(minutes_seconds[1])*60+int(minutes_seconds[2])
+    split = time.split(":")
+    seconds = 0
+    if len(split) >= 1:
+        seconds += int(split[-1].replace("s",""))
     
-    hours_minutes_seconds = re.match(r"(\d+):(\d+):(\d+)$", time)
-    if hours_minutes_seconds:
-        return int(hours_minutes_seconds[1])*3600+int(hours_minutes_seconds[2])*60+int(hours_minutes_seconds[3])
+    if len(split) >= 2:
+        seconds += 60*int(split[-2])
     
+    if len(split) >= 3:
+        seconds += 60*60*int(split[-3])
+
+    return int(seconds)
     
 class Recorder:
     def wait_for_points(self, ):
@@ -95,15 +100,21 @@ class EventRecord:
         self.team = team
         self.time_in_seconds = time_in_seconds
         self.quarter_time = quarter_time
+    
+    def _seconds_to_string(self):
+        minutes = int(self.time_in_seconds / 60)
+        seconds = self.time_in_seconds % 60
+        return f"{minutes}:{seconds:02d}"
         
     def to_csv(self):
-        values = [str(self.points), self.team, str(self.time_in_seconds)]
+        values = [str(self.points), self.team, self._seconds_to_string()]
         if self.quarter_time:
             values.append(str(self.quarter_time))
         return ";".join(values)
     
     def from_csv(csv):
         split = csv.split(";")
+        print(split)
         quarter = int(split[3]) if len(split) > 3 else None 
         return EventRecord(int(split[0]), split[1], time_to_seconds(split[2]), quarter) 
 

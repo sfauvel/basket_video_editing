@@ -17,6 +17,7 @@ from video_recorder import *
 SB_LOGO_PATH = "./SBL_Logo_OK_light.jpg"
 SCORE_FONT_SIZE = 50
 TEAM_FONT_SIZE = 40
+SHADOW_COLOR="rgb(23, 54, 93)"  # #17365d
 
 def create_text_clip(text, font_size, color):
     return mpy.TextClip(
@@ -38,8 +39,8 @@ def position_right_from(clip, clip_from, margin_x, margin_y=0):
 def center(clip, video_size):
     return clip.set_position((video_size[0]/2-clip.size[0]/2, 0))
     
-def create_score_clip(text):
-    return create_text_clip(text, font_size=SCORE_FONT_SIZE, color="Yellow")
+def create_score_clip(text, color="Yellow"):
+    return create_text_clip(text, font_size=SCORE_FONT_SIZE, color=color)
     
 def create_team_names(team_a, team_b, separator_clip):
      # Should be compute with score_a_clip width with value 100
@@ -52,12 +53,34 @@ def create_team_names(team_a, team_b, separator_clip):
     team_b_clip = create_text_clip(team_b, font_size=TEAM_FONT_SIZE, color="White")
     team_b_clip = position_right_from(team_b_clip, separator_clip, delta_x_label, delta_y_label)
     
-    return [team_a_clip, team_b_clip]
+    
+    shadow_team_a_clip = set_shadow_position(team_a_clip,
+        mpy.TextClip(
+                team_a,
+                font="Charter-bold",
+                color=SHADOW_COLOR,
+                kerning=4,
+                fontsize=TEAM_FONT_SIZE,
+            ))
+    
+    shadow_team_b_clip = set_shadow_position(team_b_clip,
+            mpy.TextClip(
+                team_b,
+                font="Charter-bold",
+                color=SHADOW_COLOR,
+                kerning=4,
+                fontsize=TEAM_FONT_SIZE,
+            ))
+    
+    return [shadow_team_a_clip, team_a_clip, shadow_team_b_clip, team_b_clip]
        
     
+def set_shadow_position(clip, shadow_clip, delta=3):
+    return shadow_clip.set_position((clip.pos(0)[0]+delta, clip.pos(0)[1]+delta))
+
 # Generate score and logo to display
 def generate_score_clips(states, team_a, team_b, size):
-        
+    print(f"{team_a} {team_b}")    
     sb_logo = mpy.ImageClip(SB_LOGO_PATH)\
         .set_position(('left', 0))\
         .resize(width=80)
@@ -66,13 +89,17 @@ def generate_score_clips(states, team_a, team_b, size):
     
     for state in states:
         clips = []
+        
         separator_clip = center(create_score_clip("-"), size)
+        clips.append(set_shadow_position(separator_clip, create_score_clip("-", color=SHADOW_COLOR)))
         clips.append(separator_clip)
         
         score_a_clip = position_left_from(create_score_clip(f"{state.score.team_a}"), separator_clip, 10)
+        clips.append(set_shadow_position(score_a_clip, create_score_clip(f"{state.score.team_a}", color=SHADOW_COLOR)))
         clips.append(score_a_clip)
         
         score_b_clip = position_right_from(create_score_clip(f"{state.score.team_b}"), separator_clip, 10)
+        clips.append(set_shadow_position(score_b_clip, create_score_clip(f"{state.score.team_b}", color=SHADOW_COLOR)))
         clips.append(score_b_clip)
         
         clips += create_team_names(team_a, team_b, separator_clip)
@@ -80,6 +107,7 @@ def generate_score_clips(states, team_a, team_b, size):
         if state.quarter_time != None:
             quarter_clip = create_text_clip(str(state.quarter_time), font_size=20, color="White")
             quarter_clip = quarter_clip.set_position((size[0]/2-quarter_clip.size[0]/2, 0))
+            clips.append(set_shadow_position(quarter_clip, create_text_clip(str(state.quarter_time), font_size=20, color=SHADOW_COLOR), 2))
             clips.append(quarter_clip)
             
         all_clips += [clip.set_start(state.start).set_end(state.end) for clip in clips]
@@ -193,10 +221,12 @@ def create_highights_clip(highlights, filename, clips):
     fade_color=(30,30,30)
     print(filename)
     for highlight in highlights:
-        original_clip = mpy.VideoFileClip(filename) 
         duration_before = 7
         duration_after = 1
+        
+        original_clip = mpy.VideoFileClip(filename) 
         print(f"    Extract from {highlight.time_in_seconds-duration_before}s to {highlight.time_in_seconds+duration_after}s")
+        print(f"    Start from {(duration_before+duration_after)*len(clips)}s")
         
         clip = original_clip.subclip(highlight.time_in_seconds-duration_before, highlight.time_in_seconds+duration_after).set_start((duration_before+duration_after)*len(clips))
         clip=fx.all.fadeout(clip, padding, final_color=fade_color)
@@ -204,7 +234,7 @@ def create_highights_clip(highlights, filename, clips):
         clips.append(clip)
         
   
-def higlights(csv_folder, video_folder, output_folder):    
+def higlights(csv_folder, video_folder, output_folder, output_file, filter):    
     clips = []
     
     for file in files_sorted(f'{csv_folder}/*.csv'):
@@ -212,26 +242,25 @@ def higlights(csv_folder, video_folder, output_folder):
         
         filename=os.path.basename(file).replace(".csv", "")
                    
-        def is_highlight(event):
-            return int(event.points) > 1 and event.team.upper() == "A"
-                   
         match = MatchPart.build_from_csv(f"{csv_folder}/{filename}.csv")
-        highlights = [event for event in match.events if is_highlight(event)]
+        highlights = [event for event in match.events if filter(event)]
         
         create_highights_clip(highlights, f"{video_folder}/{filename}.output.mp4", clips)
         
     clip = mpy.CompositeVideoClip(clips)   
-    clip.write_videofile(f"{output_folder}/highlight.mp4", threads=8, preset="veryfast")
+    clip.write_videofile(f"{output_folder}/{output_file}.mp4", threads=8, preset="veryfast")
 
 class MatchVideo:
     def __init__(self, root_folder, team_a="LOCAUX", team_b="VISITEUR"):
         self.root_folder = root_folder
+        self.root_name = self.root_folder.split("/")[-1]
         self.csv_folder = f"{self.root_folder}/csv"
         self.video_folder = f"{self.root_folder}/video"
         self.output_folder = f"{self.root_folder}/output"
         self.team_a = team_a
         self.team_b = team_b
-    
+
+        
     def format_score(self, score):
         return f"{self.team_a} {score.team_a} - {score.team_b} {self.team_b}"
         
@@ -248,7 +277,7 @@ class MatchVideo:
         pattern="*.output.mp4"
         files = [file.split('/')[-1] for file in files_sorted(f"{self.output_folder}/{pattern}")]
     
-        concat_file(self.output_folder, files, "match_complet.mp4")
+        concat_file(self.output_folder, files, f"{self.root_name}_complet.mp4")
         
     def create_single_by_quarter(self):
         compute_key = lambda quarter: quarter
@@ -256,7 +285,7 @@ class MatchVideo:
         all_files = self.split_by_quarter(compute_key)
     
         for (key, files) in all_files.items():
-            concat_file(self.output_folder, files, f"quart_temps_{key}.mp4")
+            concat_file(self.output_folder, files, f"{self.root_name}_quart_temps_{key}.mp4")
     
     def create_single_by_halftime(self):
         compute_key = lambda quarter: math.ceil(quarter / 2)
@@ -264,7 +293,7 @@ class MatchVideo:
         all_files = self.split_by_quarter(compute_key)
        
         for (key, files) in all_files.items(): 
-            concat_file(self.output_folder, files, f"mi_temps_{key}.mp4")
+            concat_file(self.output_folder, files, f"{self.root_name}_mi_temps_{key}.mp4")
             
     def split_by_quarter(self, compute_key):
         pattern="*.output.mp4"
@@ -288,7 +317,20 @@ class MatchVideo:
         return all_files
         
     def highlight(self):
-        higlights(self.csv_folder, self.output_folder, self.root_folder)
+        
+        team_to_highlight = "A" if self.team_a == "SLB" else "B"
+        def team_points(event):
+            return int(event.points) > 1 and event.team.upper() == team_to_highlight
+                   
+        def points(event):
+            return int(event.points) > 1
+        
+        def all_points(event):
+            return int(event.points) > 0
+        
+        higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_slb", team_points)
+        higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_tous", points)
+        higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_tous_les_points", all_points)
     
     def display_score(self):
         score = Score()
@@ -310,7 +352,7 @@ class MatchVideo:
 if __name__ == "__main__":
     args = sys.argv
     folder = args[2] if len(args) > 2 else "Match"
-    match = MatchVideo(folder, "SLB", "USCB")
+    match = MatchVideo(folder, "SLB", "BOUAYE")
     if args[1] == "spike":
         #ffmpeg_concat_file("short")
         print(match.display_score())
@@ -359,7 +401,7 @@ if __name__ == "__main__":
     elif args[1] == "full":
         match.generate()
         match.highlight()
-        match.split_by_quarter()
+        match.create_single_by_quarter()
         
     else:
         print(f"Unrecognized command `{args[1]}`")
