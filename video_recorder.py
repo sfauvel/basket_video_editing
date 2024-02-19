@@ -60,11 +60,11 @@ class Recorder:
 
         start_time = datetime.now()
 
-        score = Score()
+        score = (0,0)
         records=[]
        
         quarter = self.ask_quarter()
-        records.append(EventRecord(0, "X", 0, quarter))
+        records.append(EventRecord(0, "-", 0, quarter))
                 
         while True:
             print("Tapez 'ENTRER' au prochain panier ou 'e' pour finir...")
@@ -72,17 +72,17 @@ class Recorder:
             
             next_time = datetime.now()-start_time
             if x == "e":
-                records.append(EventRecord(0, "X", round(timedelta.total_seconds(next_time)), quarter))
+                records.append(EventRecord(0, "-", round(timedelta.total_seconds(next_time)), quarter))
                 break
 
             (points, team) = self.wait_for_points()
             
-            score = score.add(points, team)
+            score = (score[0]+points, score[1]) if team.upper() == "A" else (score[0], score[1]+points)
 
-            print(f'{team} +{points} => {score.team_a} - {score.team_b} | {str(next_time).split(".")[0]}')
+            print(f'{team} +{points} => {score[0]} - {score[1]} | {str(next_time).split(".")[0]}')
             records.append(EventRecord(points, team, round(timedelta.total_seconds(next_time)), quarter))
         
-        print(f"Score final: {score.team_a} - {score.team_b}")
+        print(f"Score final: {score[0]} - {score[1]}")
         
         output = "\n".join([r.to_csv() for r in records])
         with open(filename, "w") as output_file:
