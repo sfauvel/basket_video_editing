@@ -101,6 +101,23 @@ class TestEventRecord(unittest.TestCase):
         assert "tmp2.csv: Invalid" in result, result
         assert "- Line 2: 2;B;12;4" in result, result
         
+    def test_event_record_when_time_is_not_well_ordered(self):
+        shutil.rmtree("tmp")
+        os.makedirs("tmp", exist_ok=True)
+        
+        with (open("tmp/tmp1.csv", "w")) as csv_file:
+            csv_file.write("\n".join([
+                "0;-;0:00;4",
+                "2;A;1:25;4",
+                "2;B;1:10;4",
+                "0;-;1:00;4",
+                ]))
+            
+        (result, valid) = EventRecord.validate("tmp")
+        assert valid ==False
+        assert "tmp1.csv: Invalid" in result, result
+        assert "- Line 3: 2;B;1:10;4 -- Time should not be less than 1:10" in result, result
+  
 class TestVideoGenerator(unittest.TestCase):
 
     def test_build_match_part_from_csv(self):

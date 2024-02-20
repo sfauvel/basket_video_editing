@@ -118,11 +118,18 @@ class EventRecord:
         content = EventRecord.read_content_of_file(file)
         is_valid = True
         result = ""
+        last_time = 0
         for line_number, line in enumerate(content, start=1):
+            line = line.strip()
             try:
-                EventRecord.from_csv(line)
+                event = EventRecord.from_csv(line)
+                if event.time_in_seconds < last_time:
+                     result += f"- Line {line_number}: {line} -- Time should not be less than {EventRecord._seconds_to_string(event.time_in_seconds)}"
+                     print(f"Invalid: {result}")
+                     is_valid = False
+                last_time = event.time_in_seconds
             except:
-                result += f"- Line {line_number}: {line}"
+                result += f"- Line {line_number}: {line} -- Line is not well formatted"
                 print(f"Invalid: {result}")
                 is_valid = False
         
@@ -137,13 +144,13 @@ class EventRecord:
         is_valid = all(is_valid for (_, is_valid) in results)
         return ("\n".join([result for (result, is_valid) in results]), is_valid)
     
-    def _seconds_to_string(self):
-        minutes = int(self.time_in_seconds / 60)
-        seconds = self.time_in_seconds % 60
+    def _seconds_to_string(time_in_seconds):
+        minutes = int(time_in_seconds / 60)
+        seconds = time_in_seconds % 60
         return f"{minutes}:{seconds:02d}"
         
     def to_csv(self):
-        values = [str(self.points), self.team, self._seconds_to_string()]
+        values = [str(self.points), self.team, EventRecord._seconds_to_string(self.time_in_seconds)]
         if self.quarter_time:
             values.append(str(self.quarter_time))
         return ";".join(values)
