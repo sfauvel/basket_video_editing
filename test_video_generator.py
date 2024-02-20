@@ -42,6 +42,65 @@ class TestEventRecord(unittest.TestCase):
             return
         assert False, "An exception should be thrown"
         
+    def test_event_record_validation_ok(self):
+        shutil.rmtree("tmp")
+        os.makedirs("tmp", exist_ok=True)
+        
+        with (open("tmp/tmp1.csv", "w")) as csv_file:
+            csv_file.write("\n".join([
+                "0;-;0:00;4",
+                "2;A;0:25;4",
+                "0;-;1:00;4",
+                ]))
+            
+        (result, valid) = EventRecord.validate("tmp")
+        assert valid == True
+        assert "tmp1.csv: Ok" in result, result
+        
+    def test_event_record_invalid(self):
+        shutil.rmtree("tmp")
+        os.makedirs("tmp", exist_ok=True)
+        
+        with (open("tmp/tmp1.csv", "w")) as csv_file:
+            csv_file.write("\n".join([
+                "0;-;0:00;4",
+                "2;A;25;4",
+                "0;-;1:00;4",
+                ]))
+            
+        (result, valid) = EventRecord.validate("tmp")
+        assert valid ==False
+        assert "tmp1.csv: Invalid" in result, result
+        assert "- Line 2: 2;A;25;4" in result, result
+        
+        
+    def test_event_record_show_all_invalid_lines(self):
+        shutil.rmtree("tmp")
+        os.makedirs("tmp", exist_ok=True)
+        
+        with (open("tmp/tmp1.csv", "w")) as csv_file:
+            csv_file.write("\n".join([
+                "0;-;0:00;4",
+                "2;A;25;4",
+                "2;A;1:43;4",
+                "2;A;56;4",
+                "0;-;1:00;4",
+                ]))
+        with (open("tmp/tmp2.csv", "w")) as csv_file:
+            csv_file.write("\n".join([
+                "0;-;0:00;4",
+                "2;B;12;4",
+                "0;-;1:00;4",
+                ]))
+            
+        (result, valid) = EventRecord.validate("tmp")
+        assert valid ==False
+        assert "tmp1.csv: Invalid" in result, result
+        assert "- Line 2: 2;A;25;4" in result, result
+        assert "- Line 4: 2;A;56;4" in result, result
+        assert "tmp2.csv: Invalid" in result, result
+        assert "- Line 2: 2;B;12;4" in result, result
+        
 class TestVideoGenerator(unittest.TestCase):
 
     def test_build_match_part_from_csv(self):

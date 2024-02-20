@@ -1,3 +1,4 @@
+import glob
 import re
 
 from datetime import timedelta, datetime
@@ -100,6 +101,41 @@ class EventRecord:
         self.team = team
         self.time_in_seconds = time_in_seconds
         self.quarter_time = quarter_time
+    
+    # !! Duplicated from video_generator
+    def files_sorted(pattern):
+        files = glob.glob(pattern)
+        files.sort()
+        return files 
+
+    # !! Duplicated from video_match
+    def read_content_of_file(file): 
+        with open(file, "r") as input_file:
+            return input_file.readlines()
+
+
+    def _validate_csv_file(file):
+        content = EventRecord.read_content_of_file(file)
+        is_valid = True
+        result = ""
+        for line_number, line in enumerate(content, start=1):
+            try:
+                EventRecord.from_csv(line)
+            except:
+                result += f"- Line {line_number}: {line}"
+                print(f"Invalid: {result}")
+                is_valid = False
+        
+        return (f"{file}: " + ("Ok" if is_valid else "Invalid") + "\n" + result, is_valid)
+        
+    
+    def validate(csv_folder):
+        files = EventRecord.files_sorted(f"{csv_folder}/*.csv")
+        
+        results = [EventRecord._validate_csv_file(file) for file in files]
+        
+        is_valid = all(is_valid for (_, is_valid) in results)
+        return ("\n".join([result for (result, is_valid) in results]), is_valid)
     
     def _seconds_to_string(self):
         minutes = int(self.time_in_seconds / 60)
