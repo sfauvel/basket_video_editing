@@ -262,7 +262,7 @@ class MatchVideo:
 
         
     def format_score(self, score):
-        return f"{self.team_a} {score.team_a} - {score.team_b} {self.team_b}"
+        return f"{self.team_a} {str(score.team_a).rjust(3)} - {str(score.team_b).ljust(3)} {self.team_b} ({score.team_a-score.team_b})"
         
     def generate(self):
         generate_from_dir(
@@ -346,7 +346,7 @@ class MatchVideo:
             (_,a,b,_,start_time) = infos[-1]
             score = Score(a, b)
             
-        output = "\n".join([f"{time}: {text}" for (text, _,_, time, _) in infos])
+        output = "\n".join([f"{time}:".ljust(6) + f"{text}" for (text, _,_, time, _) in infos])
         return output
     
 if __name__ == "__main__":
@@ -375,7 +375,14 @@ if __name__ == "__main__":
         #audio_analyze("Match_2024_02_04/output/VID_20240204_110324.output.mp4")
     elif args[1] == "record":
         Recorder().record_input("tmp/output.csv")
-        
+    
+    elif args[1] == "validate":
+        (output, valid) = EventRecord.validate(match.csv_folder)
+        print(output)
+        print("Ok" if valid else "ERRORS")
+    elif args[1] == "score":
+        print(match.display_score())
+            
     elif args[1] == "generate":
         match.generate()
         
