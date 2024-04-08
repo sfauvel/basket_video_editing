@@ -414,8 +414,22 @@ class MatchVideo:
         
         
     def display_graph(self, infos):
+        keep_when_score = []
+        last_a = None
+        last_b = None
+        for info in infos:
+            if info[1] != last_a or info[2] != last_b:
+                keep_when_score.append(info)
+            last_a=info[1]
+            last_b=info[2]
+                
+        infos = keep_when_score
        
         scores = [b-a for (_,a,b,_,start_time,quarter_time) in infos]
+        
+        quarter_index = {}
+        for (index, (_,_,_,_,_,quarter_time)) in enumerate(infos):
+            quarter_index[quarter_time-1] = index
         
         formated_scores = "\n".join([f"{index}, {value}" for (index, value) in enumerate(scores)])
         delta_max=max(scores)
@@ -426,7 +440,9 @@ class MatchVideo:
         scale_y=-5
        
         border_width=30
+        margin_x=30
         height=440
+        graph_x_0=border_width+margin_x
         graph_y_0=height/2+border_width
         
         
@@ -456,16 +472,22 @@ width="700" height="500"     style="background-color:grey">
 <svg class="graph">
     <rect fill="white" width="640" height="440" x="30" y="30"/>
     <g class="grid">
-        <line x1="60" x2="60" y1="440" y2="60"/>
+        <line x1="{graph_x_0}" x2="{graph_x_0}" y1="440" y2="60"/>
     </g>
     <g class="grid">
-        <line x1="60" x2="640" y1="{graph_y_0}" y2="{graph_y_0}"/>
+        <line x1="{graph_x_0}" x2="640" y1="{graph_y_0}" y2="{graph_y_0}"/>
     </g>
 
     <text x="300" y="50" >Ecart de points</text>
 """
 
+        for quarter in quarter_index.values():
+            result += f"""<line x1="{graph_x_0+quarter*scale_x}" x2="{graph_x_0+quarter*scale_x}" y1="440" y2="60"/>"""
+        
+
         result += f"""
+    <line x1="{graph_x_0+quarter_index[1]*scale_x}" x2="{graph_x_0+quarter_index[1]*scale_x}" y1="440" y2="60"/>
+        
     <text x="35" y="{graph_y_0+delta_max*scale_y+2}">{delta_max}</text>
     <line x1="56" x2="64" y1="{graph_y_0+delta_max*scale_y}" y2="{graph_y_0+delta_max*scale_y}"/>
     <text x="35" y="{graph_y_0+delta_min*scale_y+2}">{delta_min}</text>
@@ -479,7 +501,7 @@ width="700" height="500"     style="background-color:grey">
 """
 
         result += f"""
-<polyline style="stroke:blue" class="curve" transform="translate(50, {graph_y_0}) scale({scale_x} {scale_y})" points="
+<polyline style="stroke:blue" class="curve" transform="translate({graph_x_0}, {graph_y_0}) scale({scale_x} {scale_y})" points="
     {formated_scores}
 "/>
 
