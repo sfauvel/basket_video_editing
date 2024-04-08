@@ -214,38 +214,74 @@ def compress(clip_filename, output_file="compress.mp4", preset="veryfast"):
     else:
         print("File {output_file} already exists. It's not regenerated")
         
+def collapse_overlaps(highlights, duration_before, duration_after):
+    result = []
+    (previous_start, previous_end) = (0, 0)
+    for highlight in highlights:
+        start_subclip = max(0, highlight.time_in_seconds-duration_before)
+        end_subclip = highlight.time_in_seconds+duration_after
+      
+        if previous_end >= start_subclip:
+            if len(result) > 0:
+                result.pop()
+            start_subclip = previous_start
+        
+        result.append((start_subclip, end_subclip))
+        (previous_start, previous_end) = result[-1]
+        
+    return result
     
-def create_highights_clip(highlights, filename, clips):
+def create_highights_clip(highlights, 
+        filename, 
+        clips, 
+        start_in_final_clip=0,
+        duration_before = 7,
+        duration_after = 1):
     
     padding=1
     fade_color=(30,30,30)
     print(filename)
-    for highlight in highlights:
-        duration_before = 7
-        duration_after = 1
+   
+    for (start_subclip, end_subclip) in collapse_overlaps(highlights, duration_before, duration_after):
         
         original_clip = mpy.VideoFileClip(filename) 
-        print(f"    Extract from {highlight.time_in_seconds-duration_before}s to {highlight.time_in_seconds+duration_after}s")
-        print(f"    Start from {(duration_before+duration_after)*len(clips)}s")
+        # start_subclip = max(0, highlight.time_in_seconds-duration_before)
+        # end_subclip = highlight.time_in_seconds+duration_after
         
-        clip = original_clip.subclip(highlight.time_in_seconds-duration_before, highlight.time_in_seconds+duration_after).set_start((duration_before+duration_after)*len(clips))
+        
+        print(f"    Extract from {start_subclip}s to {end_subclip}s")
+        print(f"    Start from {start_in_final_clip}s")
+        
+        clip = original_clip.subclip(start_subclip, end_subclip).set_start(start_in_final_clip)
         clip=fx.all.fadeout(clip, padding, final_color=fade_color)
         clip=fx.all.fadein(clip, padding, initial_color=fade_color)
         clips.append(clip)
         
+        start_in_final_clip += (end_subclip-start_subclip)
+        
+    return start_in_final_clip
+        
   
-def higlights(csv_folder, video_folder, output_folder, output_file, filter):    
+def higlights(csv_folder, 
+              video_folder, 
+              output_folder, 
+              output_file, 
+              filter, 
+              duration_before = 7, 
+              duration_after = 1,
+              input_video_filename = lambda filename: filename,
+              csv_filter = "*"):
     clips = []
     
-    for file in files_sorted(f'{csv_folder}/*.csv'):
+    total_time = 0
+    for file in files_sorted(f'{csv_folder}/{csv_filter}.csv'):
         print(file)
         
         filename=os.path.basename(file).replace(".csv", "")
                    
         match = MatchPart.build_from_csv(f"{csv_folder}/{filename}.csv")
         highlights = [event for event in match.events if filter(event)]
-        
-        create_highights_clip(highlights, f"{video_folder}/{filename}.output.mp4", clips)
+        total_time = create_highights_clip(highlights, f"{video_folder}/{input_video_filename(filename)}.mp4", clips, total_time, duration_before, duration_after)
         
     clip = mpy.CompositeVideoClip(clips)   
     clip.write_videofile(f"{output_folder}/{output_file}.mp4", threads=8, preset="veryfast")
@@ -259,10 +295,17 @@ class MatchVideo:
         self.output_folder = f"{self.root_folder}/output"
         self.team_a = team_a
         self.team_b = team_b
-
         
     def format_score(self, score):
         return f"{self.team_a} {str(score.team_a).rjust(3)} - {str(score.team_b).ljust(3)} {self.team_b} ({score.team_a-score.team_b})"
+        
+    def init_csv(self):
+        for file in files_sorted(f'{self.video_folder}/*.mp4'):
+            filename=re.sub(r"\.mp4$", "", os.path.basename(file))
+            csv_file=f"{self.csv_folder}/{filename}.csv"
+            if not os.path.isfile(csv_file):
+                with open(csv_file, "w") as csv_file:
+                    csv_file.write("0;-;0:00;1")
         
     def generate(self):
         generate_from_dir(
@@ -272,6 +315,17 @@ class MatchVideo:
             team_a=self.team_a, 
             team_b=self.team_b,
         )
+        
+    def extract(self, input_data):
+        higlights("Match_2024_03_17/extract", 
+                    "Match_2024_03_17/output", 
+                    "Match_2024_03_17/extract", 
+                    input_data, 
+                    lambda event: True, 
+                    duration_before = 5, 
+                    duration_after = 3,
+                    input_video_filename = lambda filename: f"{self.root_name}_complet",
+                    csv_filter=input_data)
         
     def create_single_video(self):
         pattern="*.output.mp4"
@@ -328,43 +382,229 @@ class MatchVideo:
         def all_points(event):
             return int(event.points) > 0
         
-        higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_slb", team_points)
-        higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_tous", points)
-        higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_tous_les_points", all_points)
+        build_filename = lambda filename: f"{filename}.output"
+        
+        duration_before = 7
+        duration_after = 2
+        higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_slb", team_points, duration_before, duration_after, build_filename)
+        higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_tous", points, duration_before, duration_after, build_filename)
+        higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_tous_les_points", all_points, duration_before, duration_after, build_filename)
+    
+    def display_by_quarter(self, stats):
+ 
+        def compute_score(quarter, score):            
+            last_quarter_score = stats[quarter-1].score if quarter > 1 else Score(0, 0)
+            score_a = score.team_a-last_quarter_score.team_a
+            score_b = score.team_b-last_quarter_score.team_b
+            return Score(score_a, score_b)
+        
+        result = ""
+        for (quarter, stat) in stats.items():
+            result += f"{quarter}: " + f"{stat.score}".rjust(8)  + f" {compute_score(quarter, stat.score)}".rjust(10) + "\n"
+            
+        result = ""
+        result += f"[%autowidth]\n|====\n"
+        result += f"| Qt | A la fin | pendant \n"
+        
+        for (quarter, stat) in stats.items():
+            result += f"| {quarter} |  {stat.score} | {compute_score(quarter, stat.score)}\n"
+        result += f"|====\n"
+            
+        return result;
+        
+        
+    def display_graph(self, infos):
+       
+        scores = [b-a for (_,a,b,_,start_time,quarter_time) in infos]
+        
+        formated_scores = "\n".join([f"{index}, {value}" for (index, value) in enumerate(scores)])
+        delta_max=max(scores)
+        delta_min=min(scores)
+        print(f"delta_max: {delta_max}, delta_min: {delta_min}")
+        
+        scale_x=10
+        scale_y=-5
+       
+        border_width=30
+        height=440
+        graph_y_0=height/2+border_width
+        
+        
+        result = """++++
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+width="700" height="500"     style="background-color:grey">
+<style>
+.graph {
+    stroke:rgb(200,200,200);
+    stroke-width:1;
+}
+.curve {
+    fill:none;
+    stroke-width:0.05;
+    marker: url(#markerCircle);
+    stroke:black;
+}
+</style>
+"""
+        result += f"""
+<defs>
+    <marker id="markerCircle" markerWidth="8" markerHeight="8" refX="5" refY="5">
+        <circle cx="5" cy="5" r="0.02" style="stroke: none; fill:#000000;"/>
+    </marker>
+</defs>
+<svg class="graph">
+    <rect fill="white" width="640" height="440" x="30" y="30"/>
+    <g class="grid">
+        <line x1="60" x2="60" y1="440" y2="60"/>
+    </g>
+    <g class="grid">
+        <line x1="60" x2="640" y1="{graph_y_0}" y2="{graph_y_0}"/>
+    </g>
+
+    <text x="300" y="50" >Ecart de points</text>
+"""
+
+        result += f"""
+    <text x="35" y="{graph_y_0+delta_max*scale_y+2}">{delta_max}</text>
+    <line x1="56" x2="64" y1="{graph_y_0+delta_max*scale_y}" y2="{graph_y_0+delta_max*scale_y}"/>
+    <text x="35" y="{graph_y_0+delta_min*scale_y+2}">{delta_min}</text>
+    <line x1="56" x2="64" y1="{graph_y_0+delta_min*scale_y}" y2="{graph_y_0+delta_min*scale_y}"/>
+    
+    <text x="35" y="{graph_y_0+2}">0</text>
+    <line x1="60" x2="60" y1="324" y2="328"/>
+    <!-- text x="634" y="349"></text-->
+    <line x1="639" x2="639" y1="324" y2="328"/>
+</svg>
+"""
+
+        result += f"""
+<polyline style="stroke:blue" class="curve" transform="translate(50, {graph_y_0}) scale({scale_x} {scale_y})" points="
+    {formated_scores}
+"/>
+
+</svg>
+++++
+        """
+        
+        return result
+    
+    class PointStats:        
+        def __init__(self):
+            self.team_a = {1:0, 2:0, 3:0}
+            self.team_b = {1:0, 2:0, 3:0}
+            
+        def add(self, record):
+            if record.team == "A":
+                self.team_a[record.points] += 1
+            if record.team == "B":
+                self.team_b[record.points] += 1
+            
+    class Stat:
+        def __init__(self, score, points):
+            self.score = score
+            self.points = points
     
     def display_score(self):
         score = Score()
         
-        infos = [(self.format_score(score), score.team_a, score.team_b, 0, 0)]
+        infos = [(self.format_score(score), score.team_a, score.team_b, 0, 0, 1)]
         start_time = 0
+        quarter_stats={}
+        last_points = MatchVideo.PointStats() 
         for file in files_sorted(f'{self.csv_folder}/*.csv'):
             print(file)
             filename=os.path.basename(file).replace(".csv", "")
             extracted_infos = EventFile().extract_infos(f"{self.csv_folder}/{filename}.csv", score.team_a, score.team_b)
-            infos += [(self.format_score(Score(info[0], info[1])), info[0], info[1], start_time+info[2], start_time+info[3]) for info in extracted_infos[1:]]
+            infos += [(self.format_score(Score(info[0], info[1])), info[0], info[1], start_time+info[2], start_time+info[3], info[4]) for info in extracted_infos[1:]]
             
-            (_,a,b,_,start_time) = infos[-1]
+            (_,a,b,_,start_time,quarter_time) = infos[-1]
+            
+            for extracted in extracted_infos:
+                last_points.add(extracted[5])
+                
             score = Score(a, b)
             
-        output = "\n".join([f"{time}:".ljust(6) + f"{text}" for (text, _,_, time, _) in infos])
+            quarter_stats[quarter_time] = MatchVideo.Stat(score, last_points)
+            
+       
+        output = "\n".join([f"{time}:".ljust(6) + f"{text}" + f" - {quarter_time} qt" for (text, _,_, time, _,quarter_time) in infos])
+       
+        result = ""
+        result += self.display_by_quarter(quarter_stats)
+        result += "\n\n"
+        result += f"[%autowidth]\n|====\n"
+        result += f"| Equipe | 1pt | 2pts | 3pts \n"
+        result += f"| {self.team_a} |  {last_points.team_a[1]} | {last_points.team_a[2]} | {last_points.team_a[3]}\n"
+        result += f"| {self.team_b} | {last_points.team_b[1]} | {last_points.team_b[2]} | {last_points.team_b[3]}\n"
+        result += f"|====\n"
+        
+        result += "\n"
+        result += self.display_graph(infos) 
+        
+        with (open(f"{self.root_folder}/stats.adoc", "w")) as stats_file:
+            stats_file.write(result)
+            
+        print(result)
         return output
+
+def extract_clips(video_file, clip_times, time_in_final_video = 0):
+    clip_list = []
+
+    for time in clip_times:
+        video = mpy.VideoFileClip(video_file) 
+        clip = video.subclip(time[0], time[1]).set_start(time_in_final_video)
+        clip_list.append(clip)        
+        time_in_final_video += clip.duration
+    return clip_list
     
 if __name__ == "__main__":
     args = sys.argv
     folder = args[2] if len(args) > 2 else "Match"
-    match = MatchVideo(folder, "SLB", "BOUAYE")
+    match = MatchVideo(folder, "ASCE", "SLB")
     if args[1] == "spike":
-        #ffmpeg_concat_file("short")
-        print(match.display_score())
+        match.csv_folder = f"{match.root_folder}/highlight"
+        match.video_folder = f"{match.root_folder}/output"
+        match.output_folder = f"{match.root_folder}/highlight"
         
-        #concat_file(folder="/home/sfauvel/Documents/projects/perso/video/Match/mi-temps2", pattern="*.compress.mp4")
+        filter = lambda event: int(event.points) > 1
+        filter = lambda event: True
         
-        # original_dir = os.getcwd()
-        # os.chdir("/media/sfauvel/USB DISK/Match_20024_02_11")
-        # files = glob.glob(f'*.mp4')
-        # for file in files:
-        #     print(file)
-        #     compress(file, output_file=f"/home/sfauvel/Documents/projects/perso/video/Match/{file}.compress.mp4", preset="veryfast")
+        clip_list = extract_clips(f"{match.video_folder}/MatchTest_complet.mp4", [
+            (1,4),
+            (4,8),
+            (1,4),
+            ])
+        
+        output_folder = match.output_folder
+        output_file = "MatchTest_extract"
+        
+        # total_time=0
+        # final_clip_list = []
+        # for clip in clip_list:
+        #     print(total_time)
+        #     final_clip_list.append(clip.set_start(total_time))
+        #     total_time += clip.duration
+        #     print(f"{clip.duration} {clip.s}" )
+        #     final_clip_list.append(clip)
+        # clip_list = final_clip_list
+        
+        padding=1
+        fade_color=(30,30,30)
+        clip_list = [fx.all.fadeout(clip, padding, final_color=fade_color) for clip in clip_list]
+        clip_list = [fx.all.fadein(clip, padding, initial_color=fade_color) for clip in clip_list]
+        
+        
+        clip = mpy.CompositeVideoClip(clip_list)
+        
+        
+        
+        clip.write_videofile(f"{output_folder}/{output_file}_x.mp4", threads=8, preset="veryfast")
+        # higlights(match.csv_folder, match.video_folder, match.output_folder, f"{match.root_name}_highlight", filter, 
+        #           duration_before=2, 
+        #           duration_after=1,
+        #           input_video_filename=lambda filename: f"{filename}")
+       
         #compress("Match/mi-temps1/VID_20240211_113451.mp4.compress.mp4", output_file=f"Match/compress.mp4", preset="medium")
         # Original 640,6Mo
         # Compress with CompositeVideoClip veryfast: 518.1mo
@@ -382,9 +622,14 @@ if __name__ == "__main__":
         print("Ok" if valid else "ERRORS")
     elif args[1] == "score":
         print(match.display_score())
-            
+    elif args[1] == "extract":
+        match.extract("big_fautes")
+        
     elif args[1] == "generate":
         match.generate()
+
+    elif args[1] == "csv":
+        match.init_csv()
         
     elif args[1] == "concat":
         concat_file("short")

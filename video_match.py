@@ -90,7 +90,7 @@ class EventFile:
             team = record.team
             end_time = record.time_in_seconds + initial_start_time
             
-            infos.append((a, b, start_time, end_time))
+            infos.append((a, b, start_time, end_time, record.quarter_time, record))
                        
             score = score.add(points, team)
             a = score.team_a
@@ -115,6 +115,6 @@ class EventFile:
     def extract_infos(self, input_name, a, b, start_time=0):
         infos=[]
         with open(input_name, "r") as input_file:
-            lines = input_file.readlines()            
+            lines = input_file.readlines()
             return self.extract_lines_infos(lines, a, b, start_time)
     

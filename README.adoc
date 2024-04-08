@@ -17,6 +17,28 @@ pip install keyboard
 * https://www.stackbuilders.com/blog/python-video-generation/
 * https://zulko.github.io/moviepy/getting_started/compositing.html
 
+== Execution
+
+.Format du fichier CSV
+----
+[POINT];[EQUIPE A ou B];[TEMPS];[Quart temps] ; [Commentaire]
+----
+
+----
+python3 video_generator.py [COMMAND] [MATCH FOLDER]
+----
+
+.Commands
+- csv: initialise les fichiers CSV.
+- validate: Pour vérifier que les fichiers sont corrects.
+- score: Pour visualiser le score.
+- generate: Génère les vidéos avec incrustation du score
+- highlight: Génère une vidéo de tous les paniers, une des paniers de Sainte Luce, une avec les paniers et lancés francs. 
+- quarter: Génère une vidéo par quart-temps.
+- half: Génère une vidéo par mi-temps.
+- all: Génère une seule vidéo de tout le match.
+- full: Génère les vidéos, les highlights et une vidéo par quart temps.
+
 == Development
 
 To run tests:

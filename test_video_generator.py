@@ -7,6 +7,7 @@ import unittest
 #from video_generator import *
 from video_recorder import *
 from video_match import *
+from video_generator import collapse_overlaps
 
 
 class TestEventRecord(unittest.TestCase):
@@ -166,25 +167,25 @@ class TestVideoGenerator(unittest.TestCase):
         
     def test_extract_infos(self):
         infos = EventFile().extract_lines_infos([
-            "2;A;0:03",
-            "1;B;0:05",
-            "3;A;0:07",
-            "0;A;0:10",
+            "2;A;0:03;3",
+            "1;B;0:05;3",
+            "3;A;0:07;3",
+            "0;A;0:10;3",
         ], 0, 0, 0)
-        assert infos[0] == (0, 0, 0, 3)
-        assert infos[1] == (2, 0, 3, 5)
-        assert infos[2] == (2, 1, 5, 7)
-        assert infos[3] == (5, 1, 7, 10)
+        assert infos[0] == (0, 0, 0, 3, 3, EventRecord.from_csv("2;A;0:03;3"))
+        assert infos[1] == (2, 0, 3, 5, 3, EventRecord.from_csv("1;B;0:05;3"))
+        assert infos[2] == (2, 1, 5, 7, 3, EventRecord.from_csv("3;A;0:07;3"))
+        assert infos[3] == (5, 1, 7, 10, 3,EventRecord.from_csv("0;A;0:10;3"))
         assert len(infos) == 4
         
     def test_extract_infos_with_several_formats_with_an_initial_score_and_time(self):
         infos = EventFile().extract_lines_infos([
-            "2;A;0:03",
-            "0;A;0:08",
+            "2;A;0:03;4",
+            "0;A;0:08;4",
         ], 5, 8, 10)
         
-        assert infos[0] == (5, 8, 10, 13), infos[0]
-        assert infos[1] == (7, 8, 13, 18), infos[1]
+        assert infos[0] == (5, 8, 10, 13, 4, EventRecord.from_csv("2;A;0:03;4")), infos[0]
+        assert infos[1] == (7, 8, 13, 18, 4, EventRecord.from_csv("0;A;0:08;4")), infos[1]
 
     def test_extract_match_events_can_read_event_without_team(self):
         match_events = EventFile().extract_match_events([
@@ -375,6 +376,35 @@ class TestVideoGenerator(unittest.TestCase):
         self.should_throw_an_exception("2:14:25")
         
 
+    def test_collapse_overlap_without_overlap(self):
+        events = EventFile().extract_match_events([
+            "2;A;0:13;2",
+            "1;B;0:25;2",
+            "3;A;0:37;2",
+            "0;-;0:50;2",
+        ])
+        
+        assert collapse_overlaps(events.events, 5, 3) == [(8, 16), (20, 28), (32, 40), (45, 53)], collapse_overlaps(events.events, 5, 3)
+        
+    
+    def test_collapse_overlap_with_overlap(self):
+        events = EventFile().extract_match_events([
+            "2;A;0:13;2",
+            "1;B;0:25;2",
+            "3;A;0:28;2",  # Overlap
+            "0;-;0:50;2",
+        ])
+        
+        assert collapse_overlaps(events.events, 5, 3) == [(8, 16), (20, 31), (45, 53)], collapse_overlaps(events.events, 5, 3)
+        
+    
+    def test_collapse_overlap_first_event_before_0(self):
+        events = EventFile().extract_match_events([
+            "2;A;0:03;2",
+            "1;B;0:25;2",
+        ])
+        
+        assert collapse_overlaps(events.events, 5, 3) == [(0, 6), (20, 28)], collapse_overlaps(events.events, 5, 3)
 
 if __name__ == "__main__":
     unittest.main()

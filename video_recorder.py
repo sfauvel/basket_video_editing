@@ -102,6 +102,13 @@ class EventRecord:
         self.time_in_seconds = time_in_seconds
         self.quarter_time = quarter_time
     
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        else:
+            return False
+
+    
     # !! Duplicated from video_generator
     def files_sorted(pattern):
         files = glob.glob(pattern)
