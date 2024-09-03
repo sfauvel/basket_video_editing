@@ -1,3 +1,4 @@
+import sys
 import tkinter as tk
 import vlc
 from tkinter import filedialog
@@ -11,7 +12,7 @@ class MediaPlayerApp(tk.Tk):
         self.geometry("800x600")
         self.configure(bg="#f0f0f0")
         self.initialize_player()
-
+        
     def initialize_player(self):
         self.instance = vlc.Instance()
         self.media_player = self.instance.media_player_new()
@@ -94,8 +95,11 @@ class MediaPlayerApp(tk.Tk):
         file_path = filedialog.askopenfilename(
             filetypes=[("Media Files", "*.mp4 *.avi")]
         )
-        if file_path:
-            self.current_file = file_path
+        self.launch_video(file_path)
+        
+    def launch_video(self, video_path):
+        if video_path:
+            self.current_file = video_path
             self.time_label.config(text="00:00:00 / " + self.get_duration_str())
             self.play_video()
 
@@ -112,7 +116,7 @@ class MediaPlayerApp(tk.Tk):
             self.media_player.set_media(media)
             #self.media_player.set_hwnd(self.media_canvas.winfo_id())
             self.media_player.set_xwindow(self.media_canvas.winfo_id())
-            self.media_player.set_rate(0.5)
+            #self.media_player.set_rate(0.5)
             self.media_player.play()
             self.playing_video = True
 
@@ -182,6 +186,12 @@ class VideoProgressBar(tk.Scale):
 
 
 if __name__ == "__main__":
+    
+    # Get first parameter from command line
+    
+    video_path = sys.argv[1] if len(sys.argv) > 1 else None
+    
     app = MediaPlayerApp()
-    app.update_video_progress()
+    app.update_video_progress
+    app.launch_video(video_path)
     app.mainloop()
