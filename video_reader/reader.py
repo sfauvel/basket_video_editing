@@ -23,7 +23,13 @@ class MediaPlayerApp(tk.Tk):
 
     def create_widgets(self):
         self.media_canvas = tk.Canvas(self, bg="black", width=800, height=400)
-        self.media_canvas.pack(pady=10, fill=tk.BOTH, expand=True)
+        self.media_canvas.pack(pady=0, fill=tk.BOTH, expand=True)
+        
+        self.progress_bar = VideoProgressBar(
+            self, self.set_video_position, bg="#e0e0e0", highlightthickness=0
+        )
+        self.progress_bar.pack(fill=tk.X, padx=10, pady=0)
+        
         self.select_file_button = tk.Button(
             self,
             text="Select File",
@@ -86,11 +92,40 @@ class MediaPlayerApp(tk.Tk):
             command=self.rewind,
         )
         self.rewind_button.pack(side=tk.LEFT, pady=5)
-        self.progress_bar = VideoProgressBar(
-            self, self.set_video_position, bg="#e0e0e0", highlightthickness=0
-        )
-        self.progress_bar.pack(fill=tk.X, padx=10, pady=5)
+        
+        # Event buttons
+        self.event_buttons_frame = tk.Frame(self, bg="#f0f0f0")
+        self.event_buttons_frame.pack(pady=5)
+        
+        def point_button(team, points):
+            button = tk.Button(
+                self.event_buttons_frame,
+                text=f"{points} pts",
+                font=("Arial", 12, "bold"),
+                bg=team[1],
+                fg="white",
+                command=lambda: self.point(points, team[0]),
+            )
+            button.pack(side=tk.LEFT, pady=5)
+            return button
+        
+        A=("A", "#2196F3")
+        B=("B", "#F44336")
+        self.point1a_button = point_button(A, 1)
+        self.point1a_button = point_button(A, 2)
+        self.point1a_button = point_button(A, 3)
+        self.point1a_button = point_button(B, 3)
+        self.point1a_button = point_button(B, 2)
+        self.point1a_button = point_button(B, 1)
 
+
+        
+    def point(self, points, team):
+        current_time = self.media_player.get_time()
+        current_time_str = str(timedelta(milliseconds=current_time))[:-3]
+        
+        print(f"{points} point for team {team[0]}: {current_time_str}")  
+        
     def select_file(self):
         file_path = filedialog.askopenfilename(
             filetypes=[("Media Files", "*.mp4 *.avi")]
@@ -116,7 +151,7 @@ class MediaPlayerApp(tk.Tk):
             self.media_player.set_media(media)
             #self.media_player.set_hwnd(self.media_canvas.winfo_id())
             self.media_player.set_xwindow(self.media_canvas.winfo_id())
-            #self.media_player.set_rate(0.5)
+            # self.media_player.set_rate(0.5)
             self.media_player.play()
             self.playing_video = True
 
