@@ -249,6 +249,7 @@ def create_highights_clip(highlights,
         # end_subclip = highlight.time_in_seconds+duration_after
         
         
+        end_subclip = min(original_clip.duration, end_subclip) # to test
         print(f"    Extract from {start_subclip}s to {end_subclip}s")
         print(f"    Start from {start_in_final_clip}s")
         
@@ -300,6 +301,13 @@ class MatchVideo:
         return f"{self.team_a} {str(score.team_a).rjust(3)} - {str(score.team_b).ljust(3)} {self.team_b} ({score.team_a-score.team_b})"
         
     def init_csv(self):
+        if not os.path.isdir(self.video_folder):
+            print(f"Folder {self.video_folder} does not exists")
+            return
+    
+        if not os.path.isdir(self.csv_folder):
+            os.makedirs(self.csv_folder)
+        
         for file in files_sorted(f'{self.video_folder}/*.mp4'):
             filename=re.sub(r"\.mp4$", "", os.path.basename(file))
             csv_file=f"{self.csv_folder}/{filename}.csv"
@@ -583,7 +591,7 @@ def extract_clips(video_file, clip_times, time_in_final_video = 0):
 if __name__ == "__main__":
     args = sys.argv
     folder = args[2] if len(args) > 2 else "Match"
-    match = MatchVideo(folder, "ASCE", "SLB")
+    match = MatchVideo(folder, "SLB", "TREILLIERES")
     if args[1] == "spike":
         match.csv_folder = f"{match.root_folder}/highlight"
         match.video_folder = f"{match.root_folder}/output"
