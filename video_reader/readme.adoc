@@ -1,0 +1,14 @@
+= Video Reader
+
+̀`tkinter` installation
+
+----
+sudo pip install tkinter
+sudo pip install python-vlc
+sudo apt update && sudo apt upgrade -y
+sudo apt install vlc
+----
+
+
+https://www.makeuseof.com/python-video-media-player-how-to-build/
+
