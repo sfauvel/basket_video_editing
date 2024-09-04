@@ -9,7 +9,7 @@ class MediaPlayerApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Media Player")
-        self.geometry("800x600")
+        self.geometry("800x800")
         self.configure(bg="#f0f0f0")
         self.initialize_player()
         
@@ -97,34 +97,70 @@ class MediaPlayerApp(tk.Tk):
         self.event_buttons_frame = tk.Frame(self, bg="#f0f0f0")
         self.event_buttons_frame.pack(pady=5)
         
-        def point_button(team, points):
+        def point_button(team, points, shortcut):
+            command = lambda: self.point(points, team[0])
             button = tk.Button(
                 self.event_buttons_frame,
                 text=f"{points} pts",
                 font=("Arial", 12, "bold"),
                 bg=team[1],
                 fg="white",
-                command=lambda: self.point(points, team[0]),
+                command=command,
             )
             button.pack(side=tk.LEFT, pady=5)
+            
+            self.bind(shortcut, lambda event: command())
             return button
         
         A=("A", "#2196F3")
         B=("B", "#F44336")
-        self.point1a_button = point_button(A, 1)
-        self.point1a_button = point_button(A, 2)
-        self.point1a_button = point_button(A, 3)
-        self.point1a_button = point_button(B, 3)
-        self.point1a_button = point_button(B, 2)
-        self.point1a_button = point_button(B, 1)
+        shortcuts = ["<w>", "<x>", "<c>", "<v>", "<b>", "<n>"]
+        iterator = iter(shortcuts)
+        self.point1a_button = point_button(A, 1, next(iterator))
+        self.point3a_button = point_button(A, 3, next(iterator))
+        self.point2a_button = point_button(A, 2, next(iterator))
+        self.point2b_button = point_button(B, 2, next(iterator))
+        self.point3b_button = point_button(B, 3, next(iterator))
+        self.point1b_button = point_button(B, 1, next(iterator))
+        
+        # Create a listbox to display the points
+        self.points_listbox = tk.Listbox(self, height=10)
+        self.points_listbox.pack(side=tk.RIGHT, pady=5, fill=tk.BOTH)
+        # Add a scroll bar to scroll through the listbox
+        self.scrollbar = tk.Scrollbar(self)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.BOTH)
+        self.points_listbox.config(yscrollcommand = self.scrollbar.set) 
+        self.scrollbar.config(command = self.points_listbox.yview)
+        
+        # add a print something when clicking an item in the listbox
+        # self.points_listbox.bind(lambda: print("xxx"), self.on_select)
 
 
+        def callback(event):
+            selection = event.widget.curselection()
+            
+            if selection:
+                index = selection[0]
+                data = event.widget.get(index)
+                print(f"{index}: {data}")
+                # TODO change video position
+                #label.configure(text=data)
+            else:
+                print(f"deselect")
+                #label.configure(text="")
+
+        self.points_listbox.bind("<<ListboxSelect>>", callback)
         
-    def point(self, points, team):
-        current_time = self.media_player.get_time()
-        current_time_str = str(timedelta(milliseconds=current_time))[:-3]
+    def point(self, points, team_name):
+        if self.playing_video:
+            current_time = self.media_player.get_time()
+            current_time_str = str(timedelta(milliseconds=current_time))[:-3]
+            
+            print(f"{points} point for team {team_name}: {current_time_str}")  
+            self.points_listbox.insert(tk.END, f"{current_time_str}: Team {team_name}: {points} pts")
         
-        print(f"{points} point for team {team[0]}: {current_time_str}")  
+        
+        
         
     def select_file(self):
         file_path = filedialog.askopenfilename(
