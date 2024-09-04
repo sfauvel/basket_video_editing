@@ -12,3 +12,11 @@ sudo apt install vlc
 
 https://www.makeuseof.com/python-video-media-player-how-to-build/
 
+
+== Development
+
+To run tests:
+
+----
+python3 -m unittest
+----

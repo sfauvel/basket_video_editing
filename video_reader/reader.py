@@ -1,9 +1,38 @@
 import sys
+import time
 import tkinter as tk
 import vlc
 from tkinter import filedialog
 from datetime import timedelta
 
+class Event:
+    def __init__(self, time, points, team_name):
+        self.time = time
+        self.points = points
+        self.team_name = team_name
+
+    def __str__(self):
+        return f"{self.time}: {self.points} pts for {self.team_name}"
+
+    def __repr__(self):
+        return self.__str__()
+    
+    def __eq__(self, other):
+        return self.time == other.time and self.points == other.points and self.team_name == other.team_name
+class EventData:
+    def __init__(self):
+        self.events = []
+
+    def add_event(self, time, points, team_name):
+        self.events.append(Event(time, points, team_name))
+        self.events = sorted(self.events, key=lambda event: event.time)
+    
+    def save(self, stream):
+        cvs_format = lambda event: f"{event.points};{event.team_name};{event.time}"
+        "\n".join([cvs_format(event) for event in self.events])
+        
+        stream.write("\n".join([cvs_format(event) for event in self.events]))
+    
 
 class MediaPlayerApp(tk.Tk):
     def __init__(self):
@@ -12,6 +41,7 @@ class MediaPlayerApp(tk.Tk):
         self.geometry("800x800")
         self.configure(bg="#f0f0f0")
         self.initialize_player()
+        self.model=EventData()
         
     def initialize_player(self):
         self.instance = vlc.Instance()
@@ -29,6 +59,15 @@ class MediaPlayerApp(tk.Tk):
             self, self.set_video_position, bg="#e0e0e0", highlightthickness=0
         )
         self.progress_bar.pack(fill=tk.X, padx=10, pady=0)
+        
+        # Add a scroll bar to scroll through the listbox
+        self.scrollbar = tk.Scrollbar(self)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.BOTH)       
+        # Create a listbox to display the points
+        self.points_listbox = tk.Listbox(self, height=10, width=30)
+        self.points_listbox.pack(side=tk.RIGHT, pady=5, fill=tk.BOTH)
+        self.points_listbox.config(yscrollcommand = self.scrollbar.set) 
+        self.scrollbar.config(command = self.points_listbox.yview)
         
         self.select_file_button = tk.Button(
             self,
@@ -123,33 +162,62 @@ class MediaPlayerApp(tk.Tk):
         self.point3b_button = point_button(B, 3, next(iterator))
         self.point1b_button = point_button(B, 1, next(iterator))
         
-        # Create a listbox to display the points
-        self.points_listbox = tk.Listbox(self, height=10)
-        self.points_listbox.pack(side=tk.RIGHT, pady=5, fill=tk.BOTH)
-        # Add a scroll bar to scroll through the listbox
-        self.scrollbar = tk.Scrollbar(self)
-        self.scrollbar.pack(side=tk.RIGHT, fill=tk.BOTH)
-        self.points_listbox.config(yscrollcommand = self.scrollbar.set) 
-        self.scrollbar.config(command = self.points_listbox.yview)
+            
+        def read_backwards():
+            # How stop this loop ?
+            self.relative_move(-100)
+            self.after(200, read_backwards)
         
-        # add a print something when clicking an item in the listbox
-        # self.points_listbox.bind(lambda: print("xxx"), self.on_select)
+        def pause_and_read_backwards():
+            self.pause_video()
+            read_backwards()
+            
+        self.bind("<space>", lambda e: self.pause_video())
+        self.bind("<Left>", lambda e: self.relative_move(-100))
+        self.bind("<Right>", lambda e: self.relative_move(100))
+        self.bind("<Control-Left>", lambda e: self.relative_move(-10000))
+        self.bind("<Control-Right>", lambda e: self.relative_move(10000))
+        self.bind("<Shift-Left>", lambda e: pause_and_read_backwards())
+        self.bind("<Shift-Right>", lambda e: self._pause_video(True))
+        
+        def set_rate(rate):
+            print(f"Setting rate to {rate}")
+            self.media_player.set_rate(rate)            
+            
+        def delete_event(event):
+            selection = event.widget.curselection()
+            
+            if selection:
+                index = selection[0]
+                self.model.events.pop(index)
+                self.refresh_events()
+            
+        # pythttps://tcl.tk/man/tcl8.6/TkCmd/keysyms.htm
+        self.bind("<KP_1>", lambda e: set_rate(1))
+        self.bind("<KP_2>", lambda e: set_rate(2))
+        self.bind("<KP_3>", lambda e: set_rate(4))
+        self.bind("1", lambda e: set_rate(1))
+        self.bind("2", lambda e: set_rate(2))
+        self.bind("3", lambda e: set_rate(4))
+        self.bind("<Delete>", delete_event)
 
 
-        def callback(event):
+        def callback_select_event(event):
             selection = event.widget.curselection()
             
             if selection:
                 index = selection[0]
                 data = event.widget.get(index)
                 print(f"{index}: {data}")
-                # TODO change video position
-                #label.configure(text=data)
+                
+                # Set video position to this event
+                time_position = self.model.events[index].time
+                self.media_player.set_time(time_position)
             else:
                 print(f"deselect")
                 #label.configure(text="")
 
-        self.points_listbox.bind("<<ListboxSelect>>", callback)
+        self.points_listbox.bind("<<ListboxSelect>>", callback_select_event)
         
     def point(self, points, team_name):
         if self.playing_video:
@@ -157,10 +225,15 @@ class MediaPlayerApp(tk.Tk):
             current_time_str = str(timedelta(milliseconds=current_time))[:-3]
             
             print(f"{points} point for team {team_name}: {current_time_str}")  
-            self.points_listbox.insert(tk.END, f"{current_time_str}: Team {team_name}: {points} pts")
+            
+            print(f"point time: {current_time}")
+            self.model.add_event(current_time, points, team_name)
+            self.refresh_events()
         
-        
-        
+    def refresh_events(self):
+        self.points_listbox.delete(0, tk.END)
+        for event in self.model.events:
+            self.points_listbox.insert(tk.END, f"{event.time}: Team {event.team_name}: {event.points} pts")
         
     def select_file(self):
         file_path = filedialog.askopenfilename(
@@ -187,23 +260,30 @@ class MediaPlayerApp(tk.Tk):
             self.media_player.set_media(media)
             #self.media_player.set_hwnd(self.media_canvas.winfo_id())
             self.media_player.set_xwindow(self.media_canvas.winfo_id())
-            # self.media_player.set_rate(0.5)
+            #self.media_player.set_rate(0.5)
             self.media_player.play()
             self.playing_video = True
+            
+    def relative_move(self, duration):
+        if self.playing_video:
+            print(f"relative_move Current time: {self.media_player.get_time()}")
+            current_time = self.media_player.get_time() + duration
+            self.media_player.set_time(current_time)
 
     def fast_forward(self):
-        if self.playing_video:
-            current_time = self.media_player.get_time() + 10000
-            self.media_player.set_time(current_time)
+        self.relative_move(10000)
 
     def rewind(self):
-        if self.playing_video:
-            current_time = self.media_player.get_time() - 10000
-            self.media_player.set_time(current_time)
+        self.relative_move(-10000)
 
     def pause_video(self):
+        self._pause_video(self.video_paused)
+                
+    def _pause_video(self, video_paused):
+        
+        print(f"_pause_video Current time: {self.media_player.get_time()}")
         if self.playing_video:
-            if self.video_paused:
+            if video_paused:
                 self.media_player.play()
                 self.video_paused = False
                 self.pause_button.config(text="Pause")
@@ -222,6 +302,7 @@ class MediaPlayerApp(tk.Tk):
         if self.playing_video:
             total_duration = self.media_player.get_length()
             position = int((float(value) / 100) * total_duration)
+            print(f"Setting position to {position}")
             self.media_player.set_time(position)
 
     def update_video_progress(self):
