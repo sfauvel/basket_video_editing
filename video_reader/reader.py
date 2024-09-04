@@ -49,6 +49,7 @@ class MediaPlayerApp(tk.Tk):
         self.current_file = None
         self.playing_video = False
         self.video_paused = False
+        self.rate=1
         self.create_widgets()
 
     def create_widgets(self):
@@ -69,8 +70,16 @@ class MediaPlayerApp(tk.Tk):
         self.points_listbox.config(yscrollcommand = self.scrollbar.set) 
         self.scrollbar.config(command = self.points_listbox.yview)
         
+        
+        self.select_file_frame = tk.Frame(self, bg="#f0f0f0")
+        self.select_file_frame.pack(pady=5, fill=tk.BOTH)
+        
+        
+        self.rate_label = tk.Label(self.select_file_frame, text=f"x{self.rate}", fg="#555555", bg="#f0f0f0",)
+        self.rate_label.place(x=0, y=0)
+        
         self.select_file_button = tk.Button(
-            self,
+            self.select_file_frame,
             text="Select File",
             font=("Arial", 12, "bold"),
             command=self.select_file,
@@ -146,7 +155,7 @@ class MediaPlayerApp(tk.Tk):
                 fg="white",
                 command=command,
             )
-            button.pack(side=tk.LEFT, pady=5)
+            button.pack(side=tk.LEFT, pady=5, padx=2)
             
             self.bind(shortcut, lambda event: command())
             return button
@@ -180,9 +189,6 @@ class MediaPlayerApp(tk.Tk):
         self.bind("<Shift-Left>", lambda e: pause_and_read_backwards())
         self.bind("<Shift-Right>", lambda e: self._pause_video(True))
         
-        def set_rate(rate):
-            print(f"Setting rate to {rate}")
-            self.media_player.set_rate(rate)            
             
         def delete_event(event):
             selection = event.widget.curselection()
@@ -193,12 +199,12 @@ class MediaPlayerApp(tk.Tk):
                 self.refresh_events()
             
         # pythttps://tcl.tk/man/tcl8.6/TkCmd/keysyms.htm
-        self.bind("<KP_1>", lambda e: set_rate(1))
-        self.bind("<KP_2>", lambda e: set_rate(2))
-        self.bind("<KP_3>", lambda e: set_rate(4))
-        self.bind("1", lambda e: set_rate(1))
-        self.bind("2", lambda e: set_rate(2))
-        self.bind("3", lambda e: set_rate(4))
+        self.bind("<KP_1>", lambda e: self.set_rate(1))
+        self.bind("<KP_2>", lambda e: self.set_rate(2))
+        self.bind("<KP_3>", lambda e: self.set_rate(4))
+        self.bind("1", lambda e: self.set_rate(1))
+        self.bind("2", lambda e: self.set_rate(2))
+        self.bind("3", lambda e: self.set_rate(4))
         self.bind("<Delete>", delete_event)
 
 
@@ -219,6 +225,12 @@ class MediaPlayerApp(tk.Tk):
 
         self.points_listbox.bind("<<ListboxSelect>>", callback_select_event)
         
+    def set_rate(self, rate):
+        print(f"Setting rate to {rate}")
+        self.rate=rate
+        self.rate_label.config(text=f"x{self.rate}")
+        self.media_player.set_rate(self.rate)
+    
     def point(self, points, team_name):
         if self.playing_video:
             current_time = self.media_player.get_time()
@@ -260,7 +272,7 @@ class MediaPlayerApp(tk.Tk):
             self.media_player.set_media(media)
             #self.media_player.set_hwnd(self.media_canvas.winfo_id())
             self.media_player.set_xwindow(self.media_canvas.winfo_id())
-            #self.media_player.set_rate(0.5)
+            self.set_rate(1)
             self.media_player.play()
             self.playing_video = True
             
@@ -313,7 +325,7 @@ class MediaPlayerApp(tk.Tk):
             self.progress_bar.set(progress_percentage)
             current_time_str = str(timedelta(milliseconds=current_time))[:-3]
             total_duration_str = str(timedelta(milliseconds=total_duration))[:-3]
-            self.time_label.config(text=f"{current_time_str} / {total_duration_str}")
+            self.time_label.v
         self.after(1000, self.update_video_progress)
 
 
