@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import tkinter as tk
@@ -84,13 +85,25 @@ class MediaPlayerApp(tk.Tk):
         self.rate_label = tk.Label(self.select_file_frame, text=f"x{self.rate}", fg="#555555", bg="#f0f0f0",)
         self.rate_label.place(x=0, y=0)
         
+        
+        self.files_frame = tk.Frame(self.select_file_frame, bg="#f0f0f0")
+        self.files_frame.pack(pady=5)
         self.select_file_button = tk.Button(
-            self.select_file_frame,
+            self.files_frame,
             text="Select File",
             font=("Arial", 12, "bold"),
             command=self.select_file,
         )
-        self.select_file_button.pack(pady=5)
+        self.select_file_button.pack(side=tk.LEFT, pady=5, padx=5)
+        
+        self.save_file_button = tk.Button(
+            self.files_frame,
+            text="Save",
+            font=("Arial", 12, "bold"),
+            command=self.save_file,
+        )
+        self.save_file_button.pack(side=tk.LEFT, pady=5, padx=5)
+        
         self.time_label = tk.Label(
             self,
             text=self.build_time_label(),
@@ -155,7 +168,7 @@ class MediaPlayerApp(tk.Tk):
             command = lambda: self.point(points, team[0])
             button = tk.Button(
                 self.event_buttons_frame,
-                text=f"{points} pts",
+                text=f"{points} pts ({shortcut.replace('<','').replace('>','')})",
                 font=("Arial", 12, "bold"),
                 bg=team[1],
                 fg="white",
@@ -168,14 +181,14 @@ class MediaPlayerApp(tk.Tk):
         
         A=("A", "#2196F3")
         B=("B", "#F44336")
-        shortcuts = ["<w>", "<x>", "<c>", "<v>", "<b>", "<n>"]
+        shortcuts = ["<q>", "<s>", "<d>", "<w>", "<x>", "<c>"]
         iterator = iter(shortcuts)
         self.point1a_button = point_button(A, 1, next(iterator))
-        self.point3a_button = point_button(A, 3, next(iterator))
         self.point2a_button = point_button(A, 2, next(iterator))
+        self.point3a_button = point_button(A, 3, next(iterator))
+        self.point1b_button = point_button(B, 1, next(iterator))
         self.point2b_button = point_button(B, 2, next(iterator))
         self.point3b_button = point_button(B, 3, next(iterator))
-        self.point1b_button = point_button(B, 1, next(iterator))
         
             
         def read_backwards():
@@ -188,13 +201,39 @@ class MediaPlayerApp(tk.Tk):
             read_backwards()
             
         self.bind("<space>", lambda e: self.pause_video())
-        self.bind("<Left>", lambda e: self.relative_move(-100))
-        self.bind("<Right>", lambda e: self.relative_move(100))
+        #self.bind("<Left>", lambda e: self.relative_move(-100))
+        #self.bind("<Right>", lambda e: self.relative_move(100))
         self.bind("<Control-Left>", lambda e: self.relative_move(-10000))
         self.bind("<Control-Right>", lambda e: self.relative_move(10000))
-        self.bind("<Shift-Left>", lambda e: pause_and_read_backwards())
+        #self.bind("<Shift-Left>", lambda e: pause_and_read_backwards())
         self.bind("<Shift-Right>", lambda e: self._pause_video(True))
         
+        # TODO this line change the value for the os !!!!
+        os.system('xset r off')
+        self.auto_repeat_rewind_flag = False
+        def auto_repeat_step_by_step(value):
+            if self.auto_repeat_rewind_flag:
+                self.relative_move(value)
+                self.after(200, lambda: auto_repeat_step_by_step(value))
+                
+        def rewind_pressed(event):
+            step_by_step_pressed(-50)
+        
+        def forward_pressed(event):
+            step_by_step_pressed(50)
+            
+        def step_by_step_pressed(value):
+            if not self.video_paused:
+                self.pause_video()
+            self.auto_repeat_rewind_flag = True
+            auto_repeat_step_by_step(value)
+            
+        def key_released(event):
+            self.auto_repeat_rewind_flag = False
+            
+        self.bind("<KeyPress-Left>", rewind_pressed)
+        self.bind("<KeyPress-Right>", forward_pressed)
+        self.bind("<KeyRelease>", key_released)
             
         def delete_event(event):
             selection = event.widget.curselection()
@@ -204,7 +243,7 @@ class MediaPlayerApp(tk.Tk):
                 self.model.events.pop(index)
                 self.refresh_events()
             
-        # pythttps://tcl.tk/man/tcl8.6/TkCmd/keysyms.htm
+        # https://tcl.tk/man/tcl8.6/TkCmd/keysyms.htm
         self.bind("<KP_1>", lambda e: self.set_rate(1))
         self.bind("<KP_2>", lambda e: self.set_rate(2))
         self.bind("<KP_3>", lambda e: self.set_rate(4))
@@ -251,7 +290,8 @@ class MediaPlayerApp(tk.Tk):
     def refresh_events(self):
         self.points_listbox.delete(0, tk.END)
         for event in self.model.events:
-            self.points_listbox.insert(tk.END, f"{event.time}: Team {event.team_name}: {event.points} pts")
+            time_str = build_time_str(event.time)
+            self.points_listbox.insert(tk.END, f"{time_str}: Team {event.team_name}: {event.points} pts")
         
     def select_file(self):
         file_path = filedialog.askopenfilename(
@@ -259,12 +299,29 @@ class MediaPlayerApp(tk.Tk):
         )
         self.launch_video(file_path)
         
+    def save_file(self):
+        if self.current_file:
+            base = os.path.basename(self.current_file)
+            filename, _ = os.path.splitext(base)
+            csv_filename = f"{filename}.csv"
+        else:
+            csv_filename = "output.csv"
+   
+        file_path = filedialog.asksaveasfilename(
+            initialfile=csv_filename,
+            filetypes=[("CSV", "*.csv")]
+        )
+        with open(file_path, "w") as file:
+            self.model.save(file)
+        
     def build_time_label(self):
         total_duration = max(self.media_player.get_length(), 0)
         current_time = max(self.media_player.get_time(), 0)
         
-        progress_percentage = 0 if (total_duration == 0) else (current_time / total_duration) * 100
-        self.progress_bar.set(progress_percentage) 
+        # When the progress_bar is set, sometimes the set_video_position is called
+        # and the video freezes for a few seconds.
+        # progress_percentage = 0 if (total_duration == 0) else (current_time / total_duration) * 100
+        # self.progress_bar.set(progress_percentage) 
         
         current_time_str = build_time_str(milliseconds=current_time)
         total_duration_str = build_time_str(milliseconds=total_duration)
@@ -328,7 +385,7 @@ class MediaPlayerApp(tk.Tk):
         # Set video position only when video is paused.
         # Otherwise a "get_buffer() failed" occurs when the scrollbar is set
         # and the video freezzes a few seconds.
-        if self.playing_video and self.video_paused:
+        if self.playing_video:
             total_duration = self.media_player.get_length()
             position = int((float(value) / 100) * total_duration)
             print(f"Setting position to {position}")
