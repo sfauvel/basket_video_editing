@@ -263,7 +263,10 @@ class MediaPlayerApp(tk.Tk):
                 
                 # Set video position to this event
                 time_position = self.model.events[index].time
-                self.media_player.set_time(time_position)
+                total_duration = max(self.media_player.get_length(), 0)
+                progress_percentage = 0 if (total_duration == 0) else (time_position / total_duration) * 100
+                self.progress_bar.set(progress_percentage)
+                #self.points_listbox.selection_clear(0, tk.END)
             else:
                 print(f"deselect")
                 #label.configure(text="")
