@@ -34,6 +34,12 @@ class EventData:
         stream.write("\n".join([cvs_format(event) for event in self.events]))
     
 
+def build_time_str(milliseconds):
+    td = timedelta(milliseconds=max(0, milliseconds))
+    mm, ss = divmod(td.seconds, 60)
+    hh, mm = divmod(mm, 60)
+    return "%d:%02d:%02d" % (hh, mm, ss)
+    
 class MediaPlayerApp(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -87,7 +93,7 @@ class MediaPlayerApp(tk.Tk):
         self.select_file_button.pack(pady=5)
         self.time_label = tk.Label(
             self,
-            text="00:00:00 / 00:00:00",
+            text=self.build_time_label(),
             font=("Arial", 12, "bold"),
             fg="#555555",
             bg="#f0f0f0",
@@ -253,18 +259,26 @@ class MediaPlayerApp(tk.Tk):
         )
         self.launch_video(file_path)
         
+    def build_time_label(self):
+        total_duration = max(self.media_player.get_length(), 0)
+        current_time = max(self.media_player.get_time(), 0)
+        
+        progress_percentage = 0 if (total_duration == 0) else (current_time / total_duration) * 100
+        self.progress_bar.set(progress_percentage) 
+        
+        current_time_str = build_time_str(milliseconds=current_time)
+        total_duration_str = build_time_str(milliseconds=total_duration)
+        return f"{current_time_str} / {total_duration_str}"
+    
+    def refresh_time(self):
+        time_label=self.build_time_label()
+        self.time_label.config(text=time_label)
+            
     def launch_video(self, video_path):
         if video_path:
             self.current_file = video_path
-            self.time_label.config(text="00:00:00 / " + self.get_duration_str())
+            self.refresh_time()
             self.play_video()
-
-    def get_duration_str(self):
-        if self.playing_video:
-            total_duration = self.media_player.get_length()
-            total_duration_str = str(timedelta(milliseconds=total_duration))[:-3]
-            return total_duration_str
-        return "00:00:00"
 
     def play_video(self):
         if not self.playing_video:
@@ -308,24 +322,22 @@ class MediaPlayerApp(tk.Tk):
         if self.playing_video:
             self.media_player.stop()
             self.playing_video = False
-        self.time_label.config(text="00:00:00 / " + self.get_duration_str())
+        self.refresh_time()
 
     def set_video_position(self, value):
-        if self.playing_video:
+        # Set video position only when video is paused.
+        # Otherwise a "get_buffer() failed" occurs when the scrollbar is set
+        # and the video freezzes a few seconds.
+        if self.playing_video and self.video_paused:
             total_duration = self.media_player.get_length()
             position = int((float(value) / 100) * total_duration)
             print(f"Setting position to {position}")
+            
             self.media_player.set_time(position)
 
     def update_video_progress(self):
         if self.playing_video:
-            total_duration = self.media_player.get_length()
-            current_time = self.media_player.get_time()
-            progress_percentage = (current_time / total_duration) * 100
-            self.progress_bar.set(progress_percentage)
-            current_time_str = str(timedelta(milliseconds=current_time))[:-3]
-            total_duration_str = str(timedelta(milliseconds=total_duration))[:-3]
-            self.time_label.v
+            self.refresh_time()
         self.after(1000, self.update_video_progress)
 
 
@@ -356,6 +368,6 @@ if __name__ == "__main__":
     video_path = sys.argv[1] if len(sys.argv) > 1 else None
     
     app = MediaPlayerApp()
-    app.update_video_progress
+    app.update_video_progress()
     app.launch_video(video_path)
     app.mainloop()
