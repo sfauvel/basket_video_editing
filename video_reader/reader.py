@@ -41,6 +41,17 @@ def build_time_str(milliseconds):
     hh, mm = divmod(mm, 60)
     return "%d:%02d:%02d" % (hh, mm, ss)
     
+class ButtonType():
+    def __init__(self, bg, fg):
+        self.bg = bg
+        self.fg = fg
+    
+ButtonType.STANDARD = ButtonType(None, None)
+ButtonType.BLUE = ButtonType("#2196F3", "#f0f0f0")
+ButtonType.GREEN = ButtonType("#4CAF50", "white")
+ButtonType.ORANGE = ButtonType("#FF9800", "white")
+ButtonType.RED = ButtonType("#F44336", "white")
+
 class MediaPlayerApp(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -59,6 +70,16 @@ class MediaPlayerApp(tk.Tk):
         self.rate=1
         self.create_widgets()
 
+    def mk_button(self, master, text, command, type=ButtonType.STANDARD):
+        return tk.Button(
+            master,
+            text=text,
+            font=("Arial", 12, "bold"),
+            command=command,
+            bg=type.bg,
+            fg=type.fg,
+        )
+        
     def create_widgets(self):
         self.media_canvas = tk.Canvas(self, bg="black", width=800, height=400)
         self.media_canvas.pack(pady=0, fill=tk.BOTH, expand=True)
@@ -81,27 +102,17 @@ class MediaPlayerApp(tk.Tk):
         self.select_file_frame = tk.Frame(self, bg="#f0f0f0")
         self.select_file_frame.pack(pady=5, fill=tk.BOTH)
         
-        
         self.rate_label = tk.Label(self.select_file_frame, text=f"x{self.rate}", fg="#555555", bg="#f0f0f0",)
         self.rate_label.place(x=0, y=0)
         
-        
         self.files_frame = tk.Frame(self.select_file_frame, bg="#f0f0f0")
         self.files_frame.pack(pady=5)
-        self.select_file_button = tk.Button(
-            self.files_frame,
-            text="Select File",
-            font=("Arial", 12, "bold"),
-            command=self.select_file,
-        )
+        
+        
+        self.select_file_button = self.mk_button(self.files_frame, "Select File", self.select_file)
         self.select_file_button.pack(side=tk.LEFT, pady=5, padx=5)
         
-        self.save_file_button = tk.Button(
-            self.files_frame,
-            text="Save",
-            font=("Arial", 12, "bold"),
-            command=self.save_file,
-        )
+        self.save_file_button = self.mk_button(self.files_frame, "Save", self.save_file)
         self.save_file_button.pack(side=tk.LEFT, pady=5, padx=5)
         
         self.time_label = tk.Label(
@@ -114,50 +125,21 @@ class MediaPlayerApp(tk.Tk):
         self.time_label.pack(pady=5)
         self.control_buttons_frame = tk.Frame(self, bg="#f0f0f0")
         self.control_buttons_frame.pack(pady=5)
-        self.play_button = tk.Button(
-            self.control_buttons_frame,
-            text="Play",
-            font=("Arial", 12, "bold"),
-            bg="#4CAF50",
-            fg="white",
-            command=self.play_video,
-        )
+        
+        self.play_button = self.mk_button(self.control_buttons_frame, "Play", self.play_video, ButtonType.GREEN)
         self.play_button.pack(side=tk.LEFT, padx=5, pady=5)
-        self.pause_button = tk.Button(
-            self.control_buttons_frame,
-            text="Pause",
-            font=("Arial", 12, "bold"),
-            bg="#FF9800",
-            fg="white",
-            command=self.pause_video,
-        )
+        
+        
+        self.pause_button = self.mk_button(self.control_buttons_frame, "Pause", self.pause_video, ButtonType.ORANGE)
         self.pause_button.pack(side=tk.LEFT, padx=10, pady=5)
-        self.stop_button = tk.Button(
-            self.control_buttons_frame,
-            text="Stop",
-            font=("Arial", 12, "bold"),
-            bg="#F44336",
-            fg="white",
-            command=self.stop,
-        )
+        
+        self.stop_button = self.mk_button(self.control_buttons_frame, "Stop", self.stop, ButtonType.RED)
         self.stop_button.pack(side=tk.LEFT, pady=5)
-        self.fast_forward_button = tk.Button(
-            self.control_buttons_frame,
-            text="Fast Forward",
-            font=("Arial", 12, "bold"),
-            bg="#2196F3",
-            fg="white",
-            command=self.fast_forward,
-        )
+        
+        self.fast_forward_button = self.mk_button(self.control_buttons_frame, "Fast Forward", self.fast_forward, ButtonType.BLUE)
         self.fast_forward_button.pack(side=tk.LEFT, padx=10, pady=5)
-        self.rewind_button = tk.Button(
-            self.control_buttons_frame,
-            text="Rewind",
-            font=("Arial", 12, "bold"),
-            bg="#2196F3",
-            fg="white",
-            command=self.rewind,
-        )
+        
+        self.rewind_button = self.mk_button(self.control_buttons_frame, "Rewind", self.rewind, ButtonType.BLUE)
         self.rewind_button.pack(side=tk.LEFT, pady=5)
         
         # Event buttons
@@ -166,14 +148,8 @@ class MediaPlayerApp(tk.Tk):
         
         def point_button(team, points, shortcut):
             command = lambda: self.point(points, team[0])
-            button = tk.Button(
-                self.event_buttons_frame,
-                text=f"{points} pts ({shortcut.replace('<','').replace('>','')})",
-                font=("Arial", 12, "bold"),
-                bg=team[1],
-                fg="white",
-                command=command,
-            )
+            button_type = ButtonType.BLUE if team == A else ButtonType.RED
+            button = self.mk_button(self.event_buttons_frame, f"{points} pts ({shortcut.replace('<','').replace('>','')})", command, button_type)
             button.pack(side=tk.LEFT, pady=5, padx=2)
             
             self.bind(shortcut, lambda event: command())
