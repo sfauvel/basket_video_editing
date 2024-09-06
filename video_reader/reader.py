@@ -45,19 +45,28 @@ class ButtonType():
     def __init__(self, bg, fg):
         self.bg = bg
         self.fg = fg
-    
+
+BACKGROUND="#f0f0f0" 
 ButtonType.STANDARD = ButtonType(None, None)
-ButtonType.BLUE = ButtonType("#2196F3", "#f0f0f0")
-ButtonType.GREEN = ButtonType("#4CAF50", "white")
-ButtonType.ORANGE = ButtonType("#FF9800", "white")
-ButtonType.RED = ButtonType("#F44336", "white")
+ButtonType.BLUE = ButtonType("#2196F3", BACKGROUND)
+ButtonType.GREEN = ButtonType("#4CAF50", BACKGROUND)
+ButtonType.ORANGE = ButtonType("#FF9800", BACKGROUND)
+ButtonType.RED = ButtonType("#F44336", BACKGROUND)
+
+class TEAM():
+    def __init__(self, name, button_type):
+        self.name=name
+        self.button_type=button_type
+    
+TEAM.A=TEAM("A", ButtonType.BLUE)
+TEAM.B=TEAM("B", ButtonType.RED)
 
 class MediaPlayerApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Media Player")
         self.geometry("800x800")
-        self.configure(bg="#f0f0f0")
+        self.configure(bg=BACKGROUND)
         self.initialize_player()
         self.model=EventData()
         
@@ -69,104 +78,105 @@ class MediaPlayerApp(tk.Tk):
         self.video_paused = False
         self.rate=1
         self.create_widgets()
-
-    def mk_button(self, master, text, command, type=ButtonType.STANDARD):
-        return tk.Button(
-            master,
-            text=text,
-            font=("Arial", 12, "bold"),
-            command=command,
-            bg=type.bg,
-            fg=type.fg,
-        )
         
     def create_widgets(self):
-        self.media_canvas = tk.Canvas(self, bg="black", width=800, height=400)
-        self.media_canvas.pack(pady=0, fill=tk.BOTH, expand=True)
+
+        def mk_button(master, text, command, type=ButtonType.STANDARD):
+            return tk.Button(
+                master,
+                text=text,
+                font=("Arial", 12, "bold"),
+                command=command,
+                bg=type.bg,
+                fg=type.fg,
+            )
+            
+        def mk_label(master, text):
+            return tk.Label(master, text=text, font=("Arial", 12, "bold"), fg="#555555", bg=BACKGROUND)
+            
+        def mk_media_component():    
+            self.media_canvas = tk.Canvas(self, bg="black", width=800, height=400)
+            self.media_canvas.pack(pady=0, fill=tk.BOTH, expand=True)
+            
+            self.progress_bar = VideoProgressBar(
+                self, self.set_video_position, bg="#e0e0e0", highlightthickness=0
+            )
+            self.progress_bar.pack(fill=tk.X, padx=10, pady=0)
         
-        self.progress_bar = VideoProgressBar(
-            self, self.set_video_position, bg="#e0e0e0", highlightthickness=0
-        )
-        self.progress_bar.pack(fill=tk.X, padx=10, pady=0)
+        def mk_event_component():
+            # Add a scroll bar to scroll through the listbox
+            self.scrollbar = tk.Scrollbar(self)
+            self.scrollbar.pack(side=tk.RIGHT, fill=tk.BOTH)       
+            # Create a listbox to display the points
+            self.points_listbox = tk.Listbox(self, height=10, width=30)
+            self.points_listbox.pack(side=tk.RIGHT, pady=5, fill=tk.BOTH)
+            self.points_listbox.config(yscrollcommand = self.scrollbar.set) 
+            self.scrollbar.config(command = self.points_listbox.yview)
         
-        # Add a scroll bar to scroll through the listbox
-        self.scrollbar = tk.Scrollbar(self)
-        self.scrollbar.pack(side=tk.RIGHT, fill=tk.BOTH)       
-        # Create a listbox to display the points
-        self.points_listbox = tk.Listbox(self, height=10, width=30)
-        self.points_listbox.pack(side=tk.RIGHT, pady=5, fill=tk.BOTH)
-        self.points_listbox.config(yscrollcommand = self.scrollbar.set) 
-        self.scrollbar.config(command = self.points_listbox.yview)
-        
-        
-        self.select_file_frame = tk.Frame(self, bg="#f0f0f0")
-        self.select_file_frame.pack(pady=5, fill=tk.BOTH)
-        
-        self.rate_label = tk.Label(self.select_file_frame, text=f"x{self.rate}", fg="#555555", bg="#f0f0f0",)
-        self.rate_label.place(x=0, y=0)
-        
-        self.files_frame = tk.Frame(self.select_file_frame, bg="#f0f0f0")
-        self.files_frame.pack(pady=5)
-        
-        
-        self.select_file_button = self.mk_button(self.files_frame, "Select File", self.select_file)
-        self.select_file_button.pack(side=tk.LEFT, pady=5, padx=5)
-        
-        self.save_file_button = self.mk_button(self.files_frame, "Save", self.save_file)
-        self.save_file_button.pack(side=tk.LEFT, pady=5, padx=5)
-        
-        self.time_label = tk.Label(
-            self,
-            text=self.build_time_label(),
-            font=("Arial", 12, "bold"),
-            fg="#555555",
-            bg="#f0f0f0",
-        )
-        self.time_label.pack(pady=5)
-        self.control_buttons_frame = tk.Frame(self, bg="#f0f0f0")
-        self.control_buttons_frame.pack(pady=5)
-        
-        self.play_button = self.mk_button(self.control_buttons_frame, "Play", self.play_video, ButtonType.GREEN)
-        self.play_button.pack(side=tk.LEFT, padx=5, pady=5)
-        
-        
-        self.pause_button = self.mk_button(self.control_buttons_frame, "Pause", self.pause_video, ButtonType.ORANGE)
-        self.pause_button.pack(side=tk.LEFT, padx=10, pady=5)
-        
-        self.stop_button = self.mk_button(self.control_buttons_frame, "Stop", self.stop, ButtonType.RED)
-        self.stop_button.pack(side=tk.LEFT, pady=5)
-        
-        self.fast_forward_button = self.mk_button(self.control_buttons_frame, "Fast Forward", self.fast_forward, ButtonType.BLUE)
-        self.fast_forward_button.pack(side=tk.LEFT, padx=10, pady=5)
-        
-        self.rewind_button = self.mk_button(self.control_buttons_frame, "Rewind", self.rewind, ButtonType.BLUE)
-        self.rewind_button.pack(side=tk.LEFT, pady=5)
-        
-        # Event buttons
-        self.event_buttons_frame = tk.Frame(self, bg="#f0f0f0")
-        self.event_buttons_frame.pack(pady=5)
-        
-        def point_button(team, points, shortcut):
-            command = lambda: self.point(points, team[0])
-            button_type = ButtonType.BLUE if team == A else ButtonType.RED
-            button = self.mk_button(self.event_buttons_frame, f"{points} pts ({shortcut.replace('<','').replace('>','')})", command, button_type)
+        def mk_files_component(master):
+            self.files_frame = tk.Frame(master, bg=BACKGROUND)
+            self.files_frame.pack(pady=5)
+            
+            self.select_file_button = mk_button(self.files_frame, "Select File", self.select_file)
+            self.select_file_button.pack(side=tk.LEFT, pady=5, padx=5)
+            
+            self.save_file_button = mk_button(self.files_frame, "Save", self.save_file)
+            self.save_file_button.pack(side=tk.LEFT, pady=5, padx=5)
+            
+        def mk_point_button(team, points, shortcut):
+            command = lambda: self.point(points, team.name)
+            button = mk_button(self.event_buttons_frame, f"{points} pts ({shortcut.replace('<','').replace('>','')})", command, team.button_type)
             button.pack(side=tk.LEFT, pady=5, padx=2)
             
             self.bind(shortcut, lambda event: command())
             return button
         
-        A=("A", "#2196F3")
-        B=("B", "#F44336")
+        # Create components
+        mk_media_component()
+        mk_event_component()
+        
+        self.select_file_frame = tk.Frame(self, bg=BACKGROUND)
+        self.select_file_frame.pack(pady=5, fill=tk.BOTH)
+             
+        self.rate_label = mk_label(self.select_file_frame, f"x{self.rate}")
+        self.rate_label.place(x=0, y=0)
+        
+        mk_files_component(self.select_file_frame)
+        
+        self.time_label = mk_label(self, self.build_time_label())
+        self.time_label.pack(pady=5)
+        
+        self.control_buttons_frame = tk.Frame(self, bg=BACKGROUND)
+        self.control_buttons_frame.pack(pady=5)
+        
+        self.play_button = mk_button(self.control_buttons_frame, "Play", self.play_video, ButtonType.GREEN)
+        self.play_button.pack(side=tk.LEFT, padx=5, pady=5)
+        
+        self.pause_button = mk_button(self.control_buttons_frame, "Pause", self.pause_video, ButtonType.ORANGE)
+        self.pause_button.pack(side=tk.LEFT, padx=10, pady=5)
+        
+        self.stop_button = mk_button(self.control_buttons_frame, "Stop", self.stop, ButtonType.RED)
+        self.stop_button.pack(side=tk.LEFT, pady=5)
+        
+        self.fast_forward_button = mk_button(self.control_buttons_frame, "Fast Forward", self.fast_forward, ButtonType.BLUE)
+        self.fast_forward_button.pack(side=tk.LEFT, padx=10, pady=5)
+        
+        self.rewind_button = mk_button(self.control_buttons_frame, "Rewind", self.rewind, ButtonType.BLUE)
+        self.rewind_button.pack(side=tk.LEFT, pady=5)
+        
+        # Event buttons
+        self.event_buttons_frame = tk.Frame(self, bg=BACKGROUND)
+        self.event_buttons_frame.pack(pady=5)
+            
         shortcuts = ["<q>", "<s>", "<d>", "<w>", "<x>", "<c>"]
         iterator = iter(shortcuts)
-        self.point1a_button = point_button(A, 1, next(iterator))
-        self.point2a_button = point_button(A, 2, next(iterator))
-        self.point3a_button = point_button(A, 3, next(iterator))
-        self.point1b_button = point_button(B, 1, next(iterator))
-        self.point2b_button = point_button(B, 2, next(iterator))
-        self.point3b_button = point_button(B, 3, next(iterator))
-        
-            
+        self.point1a_button = mk_point_button(TEAM.A, 1, next(iterator))
+        self.point2a_button = mk_point_button(TEAM.A, 2, next(iterator))
+        self.point3a_button = mk_point_button(TEAM.A, 3, next(iterator))
+        self.point1b_button = mk_point_button(TEAM.B, 1, next(iterator))
+        self.point2b_button = mk_point_button(TEAM.B, 2, next(iterator))
+        self.point3b_button = mk_point_button(TEAM.B, 3, next(iterator))
+         
         def read_backwards():
             # How stop this loop ?
             self.relative_move(-100)
@@ -176,13 +186,6 @@ class MediaPlayerApp(tk.Tk):
             self.pause_video()
             read_backwards()
             
-        self.bind("<space>", lambda e: self.pause_video())
-        #self.bind("<Left>", lambda e: self.relative_move(-100))
-        #self.bind("<Right>", lambda e: self.relative_move(100))
-        self.bind("<Control-Left>", lambda e: self.relative_move(-10000))
-        self.bind("<Control-Right>", lambda e: self.relative_move(10000))
-        #self.bind("<Shift-Left>", lambda e: pause_and_read_backwards())
-        self.bind("<Shift-Right>", lambda e: self._pause_video(True))
         
         # TODO this line change the value for the os !!!!
         os.system('xset r off')
@@ -207,10 +210,6 @@ class MediaPlayerApp(tk.Tk):
         def key_released(event):
             self.auto_repeat_rewind_flag = False
             
-        self.bind("<KeyPress-Left>", rewind_pressed)
-        self.bind("<KeyPress-Right>", forward_pressed)
-        self.bind("<KeyRelease>", key_released)
-            
         def delete_event(event):
             selection = event.widget.curselection()
             
@@ -218,6 +217,18 @@ class MediaPlayerApp(tk.Tk):
                 index = selection[0]
                 self.model.events.pop(index)
                 self.refresh_events()
+            
+        self.bind("<space>", lambda e: self.pause_video())
+        #self.bind("<Left>", lambda e: self.relative_move(-100))
+        #self.bind("<Right>", lambda e: self.relative_move(100))
+        self.bind("<Control-Left>", lambda e: self.relative_move(-10000))
+        self.bind("<Control-Right>", lambda e: self.relative_move(10000))
+        #self.bind("<Shift-Left>", lambda e: pause_and_read_backwards())
+        self.bind("<Shift-Right>", lambda e: self._pause_video(True))
+        
+        self.bind("<KeyPress-Left>", rewind_pressed)
+        self.bind("<KeyPress-Right>", forward_pressed)
+        self.bind("<KeyRelease>", key_released)
             
         # https://tcl.tk/man/tcl8.6/TkCmd/keysyms.htm
         self.bind("<KP_1>", lambda e: self.set_rate(1))
