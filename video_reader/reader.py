@@ -29,7 +29,7 @@ class EventData:
         self.events = sorted(self.events, key=lambda event: event.time)
     
     def save(self, stream):
-        cvs_format = lambda event: f"{event.points};{event.team_name};{event.time}"
+        cvs_format = lambda event: f"{event.points};{event.team_name};{build_time_str(event.time)}"
         "\n".join([cvs_format(event) for event in self.events])
         
         stream.write("\n".join([cvs_format(event) for event in self.events]))
@@ -60,6 +60,8 @@ class TEAM():
     
 TEAM.A=TEAM("A", ButtonType.BLUE)
 TEAM.B=TEAM("B", ButtonType.RED)
+TEAM.START=TEAM(">", ButtonType.STANDARD)
+TEAM.END=TEAM("<", ButtonType.STANDARD)
 
 class MediaPlayerApp(tk.Tk):
     def __init__(self):
@@ -123,6 +125,9 @@ class MediaPlayerApp(tk.Tk):
             self.save_file_button = mk_button(self.files_frame, "Save", self.save_file)
             self.save_file_button.pack(side=tk.LEFT, pady=5, padx=5)
             
+            self.load_csv_file_button = mk_button(self.files_frame, "Load", self.select_csv)
+            self.load_csv_file_button.pack(side=tk.LEFT, pady=5, padx=5)
+            
         def mk_point_button(team, points, shortcut):
             command = lambda: self.point(points, team.name)
             button = mk_button(self.event_buttons_frame, f"{points} pts ({shortcut.replace('<','').replace('>','')})", command, team.button_type)
@@ -168,7 +173,7 @@ class MediaPlayerApp(tk.Tk):
         self.event_buttons_frame = tk.Frame(self, bg=BACKGROUND)
         self.event_buttons_frame.pack(pady=5)
             
-        shortcuts = ["<q>", "<s>", "<d>", "<w>", "<x>", "<c>"]
+        shortcuts = ["<q>", "<s>", "<d>", "<w>", "<x>", "<c>", "<m>", "<M>"]
         iterator = iter(shortcuts)
         self.point1a_button = mk_point_button(TEAM.A, 1, next(iterator))
         self.point2a_button = mk_point_button(TEAM.A, 2, next(iterator))
@@ -176,6 +181,8 @@ class MediaPlayerApp(tk.Tk):
         self.point1b_button = mk_point_button(TEAM.B, 1, next(iterator))
         self.point2b_button = mk_point_button(TEAM.B, 2, next(iterator))
         self.point3b_button = mk_point_button(TEAM.B, 3, next(iterator))
+        self.event_button = mk_point_button(TEAM.START, 0, next(iterator))
+        self.event_button = mk_point_button(TEAM.END, 0, next(iterator))
          
         def read_backwards():
             # How stop this loop ?
@@ -234,13 +241,22 @@ class MediaPlayerApp(tk.Tk):
         self.bind("<KP_1>", lambda e: self.set_rate(1))
         self.bind("<KP_2>", lambda e: self.set_rate(2))
         self.bind("<KP_3>", lambda e: self.set_rate(4))
+        self.bind("&", lambda e: self.set_rate(1))
         self.bind("1", lambda e: self.set_rate(1))
+        self.bind("<eacute>", lambda e: self.set_rate(2))
         self.bind("2", lambda e: self.set_rate(2))
-        self.bind("3", lambda e: self.set_rate(4))
+        self.bind("\"", lambda e: self.set_rate(3))
+        self.bind("3", lambda e: self.set_rate(3))
+        self.bind("'", lambda e: self.set_rate(4))
+        self.bind("4", lambda e: self.set_rate(4))
+        self.bind("(", lambda e: self.set_rate(5))
+        self.bind("5", lambda e: self.set_rate(5))
         self.bind("<Delete>", delete_event)
 
 
         def callback_select_event(event):
+            print("callback_select_event")
+            print(f"callback_select_event {event}")
             selection = event.widget.curselection()
             
             if selection:
@@ -250,7 +266,7 @@ class MediaPlayerApp(tk.Tk):
                 
                 # Set video position to this event
                 time_position = self.model.events[index].time
-                time_position -= 3000
+                # time_position -= 3000
                 total_duration = max(self.media_player.get_length(), 0)
                 progress_percentage = 0 if (total_duration == 0) else (time_position / total_duration) * 100
                 #self.progress_bar.set(progress_percentage)
@@ -261,7 +277,8 @@ class MediaPlayerApp(tk.Tk):
                 print(f"deselect")
                 #label.configure(text="")
 
-        self.points_listbox.bind("<<ListboxSelect>>", callback_select_event)
+        # self.points_listbox.bind("<<ListboxSelect>>", callback_select_event) # Ne pas binder sur Select sinon le <espace> déclenche l'évenement
+        self.points_listbox.bind("<ButtonRelease-1>", callback_select_event)
         
     def set_rate(self, rate):
         print(f"Setting rate to {rate}")
@@ -279,6 +296,7 @@ class MediaPlayerApp(tk.Tk):
             print(f"point time: {current_time}")
             self.model.add_event(current_time, points, team_name)
             self.refresh_events()
+            self.points_listbox.see(len(self.model.events)+1)
         
     def refresh_events(self):
         self.points_listbox.delete(0, tk.END)
@@ -292,6 +310,13 @@ class MediaPlayerApp(tk.Tk):
         )
         self.launch_video(file_path)
         
+    
+    def select_csv(self):
+        file_path = filedialog.askopenfilename(
+            filetypes=[("CSV Files", "*.csv *.tmp")]
+        )
+        self.load_csv_file(file_path)
+        
     def save_file(self):
         if self.current_file:
             base = os.path.basename(self.current_file)
@@ -302,11 +327,23 @@ class MediaPlayerApp(tk.Tk):
    
         file_path = filedialog.asksaveasfilename(
             initialfile=csv_filename,
-            filetypes=[("CSV", "*.csv")]
+            filetypes=[("CSV", "*.csv *.tmp")]
         )
         with open(file_path, "w") as file:
             self.model.save(file)
         
+    def load_csv_file(self, file_path):
+        def time_to_milliseconds(time_str):
+            hh, mm, ss = time_str.split(":")
+            return int(hh) * 3600000 + int(mm) * 60000 + int(ss) * 1000
+        with open(file_path, "r") as file:
+            lines = file.readlines()
+            for line in lines:
+                points, team_name, time = line.split(";")
+                
+                self.model.add_event(time_to_milliseconds(time), int(points), team_name)
+        self.refresh_events()
+    
     def build_time_label(self):
         total_duration = max(self.media_player.get_length(), 0)
         current_time = max(self.media_player.get_time(), 0)
@@ -356,8 +393,8 @@ class MediaPlayerApp(tk.Tk):
         self._pause_video(self.video_paused)
                 
     def _pause_video(self, video_paused):
-        
-        print(f"_pause_video Current time: {self.media_player.get_time()}")
+        current_time=self.media_player.get_time()
+        print(f"_pause_video Current time: {current_time}")
         if self.playing_video:
             if video_paused:
                 self.media_player.play()
@@ -367,7 +404,7 @@ class MediaPlayerApp(tk.Tk):
                 self.media_player.pause()
                 self.video_paused = True
                 self.pause_button.config(text="Resume")
-
+                
     def stop(self):
         if self.playing_video:
             self.media_player.stop()
