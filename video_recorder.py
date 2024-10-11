@@ -5,6 +5,9 @@ from datetime import timedelta, datetime
 
 
 def time_to_seconds(time):
+    if re.match(r'^0:(\d)+:\d\d$', time):
+        time = time[2:]
+  
   
     result = re.match(r'^(\d)+:\d\d$', time)
     if result == None:

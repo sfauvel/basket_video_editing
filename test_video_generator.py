@@ -43,6 +43,11 @@ class TestEventRecord(unittest.TestCase):
             return
         assert False, "An exception should be thrown"
         
+    
+    def test_event_record_from_csv_with_time_with_hour(self):
+        record = EventRecord.from_csv("3;A;0:04:25;2")
+        assert 4*60+25 == record.time_in_seconds
+        
     def test_event_record_validation_ok(self):
         shutil.rmtree("tmp")
         os.makedirs("tmp", exist_ok=True)
