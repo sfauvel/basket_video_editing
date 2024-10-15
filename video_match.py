@@ -76,7 +76,40 @@ class MatchPart:
         if full_time != None:
             states[-1].end = full_time
         return states 
-   
+    
+    def game_sheet(self, start_point=0):
+        
+        def _seconds_to_string(time_in_seconds):
+            minutes = int(time_in_seconds / 60)
+            seconds = time_in_seconds % 60
+            return f"0:{minutes:02d}:{seconds:02d}"
+        
+        scoreA=[]
+        scoreB=[]
+        for event in [event for event in self.events if event.points > 0]:
+            score_to_append = scoreA if event.team == "A" else scoreB
+            score_to_append += [None] * (event.points-1)
+            score_to_append += [(event.points, _seconds_to_string(event.time_in_seconds))]
+
+        empty_score="              "
+        lines=[]
+        points=0
+        for i in range(max(len(scoreA), len(scoreB))):
+            a = f"{scoreA[i][1]} (+{scoreA[i][0]})  " if i < len(scoreA) and scoreA[i] != None else empty_score 
+            b = f"  (+{scoreB[i][0]}) {scoreB[i][1]}" if i < len(scoreB) and scoreB[i] != None else empty_score 
+            
+            points=i+1+start_point
+            lines.append(f"{a}{points}{b}")
+        return ("\n".join(lines), points)
+
+    def game_sheet_multi_part(parts):
+        start_point=0
+        result=[]
+        match=MatchPart(0, 0, [])
+        for part in parts:
+            match.events += part.events
+            
+        return match.game_sheet()[0]
 
 class EventFile:
     

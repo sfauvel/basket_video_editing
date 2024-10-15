@@ -411,5 +411,88 @@ class TestVideoGenerator(unittest.TestCase):
         
         assert collapse_overlaps(events.events, 5, 3) == [(0, 6), (20, 28)], collapse_overlaps(events.events, 5, 3)
 
+
+    def test_build_match_sheet_with_A_score(self):
+        match_events = EventFile().extract_match_events([
+            "2;A;0:03;2",
+        ])
+        
+        assert match_events.game_sheet() == ("\n".join([
+            "              1              ",
+            "0:00:03 (+2)  2              ",
+        ]), 2), "\n"+str(match_events.game_sheet())
+        
+    def test_build_match_sheet_with_B_score(self):
+        match_events = EventFile().extract_match_events([
+            "2;B;0:03;2",
+        ])
+        
+        assert match_events.game_sheet() == ("\n".join([
+            "              1              ",
+            "              2  (+2) 0:00:03",
+        ]),2), "\n"+str(match_events.game_sheet())
+        
+        
+    def test_build_match_sheet_with_some_scores(self):
+        match_events = EventFile().extract_match_events([
+            "2;A;0:13;2",
+            "1;B;0:25;2",
+            "3;A;0:37;2",
+        ])
+        
+        assert match_events.game_sheet() == ("\n".join([
+            "              1  (+1) 0:00:25",
+            "0:00:13 (+2)  2              ",
+            "              3              ",
+            "              4              ",
+            "0:00:37 (+3)  5              ",
+        ]), 5), "\n"+str(match_events.game_sheet())
+        
+    def test_build_match_sheet_start_at(self):
+        match_events = EventFile().extract_match_events([
+            "2;A;0:03;2",
+        ])
+        
+        assert match_events.game_sheet(5) == ("\n".join([
+            "              6              ",
+            "0:00:03 (+2)  7              ",
+        ]),7), "\n"+str(match_events.game_sheet())
+        
+        
+    def test_build_match_sheet_should_not_add_when_no_points(self):
+        match_events = EventFile().extract_match_events([
+            "2;A;0:03;2",
+            "0;-;0:04;2",
+            "1;B;0:05;2",
+        ])
+        # gamesheet = GameSheet()
+        # gamesheet.add(match_events)
+        assert match_events.game_sheet() == ("\n".join([
+            "              1  (+1) 0:00:05",
+            "0:00:03 (+2)  2              ",
+        ]), 2), "\n"+str(match_events.game_sheet())
+        
+    def test_build_match_sheet_with_several_match_part(self):
+        match_events_1= EventFile().extract_match_events([
+            "2;A;0:03;2",
+            "1;B;0:05;2",
+        ])
+        match_events_2 = EventFile().extract_match_events([
+            "3;A;0:02;2",
+            "3;B;0:04;2",
+            "2;B;0:06;2",
+        ])
+        game_sheet=MatchPart.game_sheet_multi_part([match_events_1, match_events_2])
+        assert str(game_sheet) == "\n".join([
+            "              1  (+1) 0:00:05",
+            "0:00:03 (+2)  2              ",
+            "              3              ",
+            "              4  (+3) 0:00:04",
+            "0:00:02 (+3)  5              ",
+            "              6  (+2) 0:00:06",
+        ]), "\n"+str(game_sheet)
+        
+        
+        
 if __name__ == "__main__":
     unittest.main()
