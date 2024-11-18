@@ -255,7 +255,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 Dialogue: 1,0:00:00.00,{build_time_str(duration)}.00,Score,,0,0,0,,-
 Dialogue: 1,0:00:00.00,{build_time_str(duration)}.00,TeamA,,0,0,0,,{team_a}
 Dialogue: 1,0:00:00.00,{build_time_str(duration)}.00,TeamB,,0,0,0,,{team_b} 
-Dialogue: 2,0:00:00.00,0:02:43.00,Quarter,,0,0,0,,{states[-1].quarter_time}"""
+Dialogue: 2,0:00:00.00,{build_time_str(duration)}.00,Quarter,,0,0,0,,{states[-1].quarter_time}"""
         # print(csv_file)
         # print(states[-1])
         # # print( '\n'.join([str(s) for s in states]))
