@@ -5,25 +5,24 @@ from datetime import timedelta, datetime
 
 
 def time_to_seconds(time):
-    if re.match(r'^0:(\d)+:\d\d$', time):
-        time = time[2:]
-  
-  
-    result = re.match(r'^(\d)+:\d\d$', time)
-    if result == None:
-        raise Exception(f"Invalid time: '{time}'")
-    
     split = time.split(":")
+    if len(split) < 2  or 3 < len(split):
+        raise Exception(f"Invalid time: '{time}'")
+    for number in split:
+        if not re.match(r'^(\d)+$', number):
+            raise Exception(f"Invalid time: '{time}'")
+    
     seconds = 0
+    
     if len(split) >= 1:
-        seconds += int(split[-1].replace("s",""))
+        seconds += int(split[-1])
     
     if len(split) >= 2:
         seconds += 60*int(split[-2])
     
     if len(split) >= 3:
         seconds += 60*60*int(split[-3])
-
+        
     return int(seconds)
     
 class Recorder:

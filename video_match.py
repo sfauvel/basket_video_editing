@@ -103,11 +103,18 @@ class MatchPart:
         return ("\n".join(lines), points)
 
     def game_sheet_multi_part(parts):
+        
+        def adjust_time(event, start_time):
+            event.time_in_seconds += start_time
+            return event
+        
         start_point=0
         result=[]
         match=MatchPart(0, 0, [])
+        last_time=0
         for part in parts:
-            match.events += part.events
+            match.events += [adjust_time(event, last_time) for event in part.events]
+            last_time = match.events[-1].time_in_seconds
             
         return match.game_sheet()[0]
 

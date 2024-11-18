@@ -14,7 +14,7 @@ from moviepy.video import fx
 from video_match import *
 from video_recorder import *
 
-SB_LOGO_PATH = "./SBL_Logo_OK_light.jpg"
+SB_LOGO_PATH = "../SLB_Logo_OK_light.jpg"
 SCORE_FONT_SIZE = 50
 TEAM_FONT_SIZE = 40
 SHADOW_COLOR="rgb(23, 54, 93)"  # #17365d
@@ -489,16 +489,23 @@ class MatchVideo:
         duration_before = 7
         duration_after = 2
         
-        team_to_highlight = "A" if self.team_a == "SLB" else "B"
-        self.highlight_team_points(team_to_highlight, duration_before, duration_after, build_input_video_filename)
+        
+        # self.highlight_team_points(team_to_highlight, duration_before, duration_after, build_input_video_filename)
+        
+        # team_to_highlight = "A" if self.team_a == "SLB" else "B"
+        self.highlight_team_points("A", duration_before, duration_after, build_input_video_filename, self.team_a.lower().replace(" ", "_"))
+        self.highlight_team_points("B", duration_before, duration_after, build_input_video_filename, self.team_b.lower().replace(" ", "_"))
+        
         # self.highlight_points(duration_before, duration_after, build_input_video_filename)
         # self.highlight_all_points(duration_before, duration_after, build_input_video_filename)
+        # self.output_folder=f"{self.root_folder}/logo"
+        # self.highlight_all_points(duration_before, duration_after)
     
-    def highlight_team_points(self, team, duration_before = 7, duration_after = 2, build_input_video_filename = lambda filename: filename):
+    def highlight_team_points(self, team, duration_before = 7, duration_after = 2, build_input_video_filename = lambda filename: filename, team_name="slb"):
         def team_points(event):
             return int(event.points) > 1 and event.team.upper() == team
         
-        higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_slb", team_points, duration_before, duration_after, build_input_video_filename)
+        higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_{team_name}", team_points, duration_before, duration_after, build_input_video_filename)
         
     def highlight_points(self, duration_before = 7, duration_after = 2, build_input_video_filename = lambda filename: filename):
         def points(event):
@@ -669,7 +676,6 @@ width="700" height="500"     style="background-color:grey">
                 last_points.add(extracted[5])
                 
             score = Score(a, b)
-            
             quarter_stats[quarter_time] = MatchVideo.Stat(score, last_points)
 
         match_parts = [MatchPart.build_from_csv(f"{file}") for file in files_sorted(f'{self.csv_folder}/*.csv')]
@@ -845,7 +851,7 @@ def extract_clips(video_file, clip_times, time_in_final_video = 0):
 if __name__ == "__main__":
     args = sys.argv
     folder = args[2] if len(args) > 2 else "Match"
-    match = MatchVideo(folder, "BOUGUENAIS", "SLB")
+    match = MatchVideo(folder, "ST ROGATIEN", "SLB")
     if args[1] == "spike":
         match.csv_folder = f"{match.root_folder}/test"
         match.video_folder = f"{match.root_folder}/video"

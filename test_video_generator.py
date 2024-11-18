@@ -367,8 +367,9 @@ class TestVideoGenerator(unittest.TestCase):
         assert 5 == time_to_seconds("0:05")
         assert 4*60+25 == time_to_seconds("4:25")
         assert 2*3600+14*60+25 == time_to_seconds("134:25")
+        assert 1*3600+14*60+25 == time_to_seconds("1:14:25")
+        assert 1*3600+14*60+25 == time_to_seconds("1:14:25")
         
-    
     def should_throw_an_exception(self, time):
         try:
             time_to_seconds(time)
@@ -378,8 +379,7 @@ class TestVideoGenerator(unittest.TestCase):
     
     def test_invalid_time_to_seconds(self):
         self.should_throw_an_exception("5s")
-        self.should_throw_an_exception("2:14:25")
-        
+        self.should_throw_an_exception("1:02:14:25")
 
     def test_collapse_overlap_without_overlap(self):
         events = EventFile().extract_match_events([
@@ -476,6 +476,7 @@ class TestVideoGenerator(unittest.TestCase):
         match_events_1= EventFile().extract_match_events([
             "2;A;0:03;2",
             "1;B;0:05;2",
+            "0;-;0:10;2",
         ])
         match_events_2 = EventFile().extract_match_events([
             "3;A;0:02;2",
@@ -487,9 +488,9 @@ class TestVideoGenerator(unittest.TestCase):
             "              1  (+1) 0:00:05",
             "0:00:03 (+2)  2              ",
             "              3              ",
-            "              4  (+3) 0:00:04",
-            "0:00:02 (+3)  5              ",
-            "              6  (+2) 0:00:06",
+            "              4  (+3) 0:00:14",
+            "0:00:12 (+3)  5              ",
+            "              6  (+2) 0:00:16",
         ]), "\n"+str(game_sheet)
         
         
