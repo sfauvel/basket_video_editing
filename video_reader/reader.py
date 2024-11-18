@@ -68,9 +68,9 @@ class MediaPlayerApp(tk.Tk):
         super().__init__()
         self.title("Media Player")
         self.geometry("800x800")
+        self.model=EventData()
         self.configure(bg=BACKGROUND)
         self.initialize_player()
-        self.model=EventData()
         
     def initialize_player(self):
         self.instance = vlc.Instance()
@@ -80,6 +80,14 @@ class MediaPlayerApp(tk.Tk):
         self.video_paused = False
         self.rate=1
         self.create_widgets()
+        
+        def length_changed(event):
+            total_duration = event.u.new_length
+            self.model.add_event(0, int(0), "-")
+            self.model.add_event(total_duration, int(0), "-")
+            self.refresh_events()
+            
+        self.media_player.event_manager().event_attach(vlc.EventType.MediaPlayerLengthChanged, length_changed)
         
     def create_widgets(self):
 
@@ -336,6 +344,8 @@ class MediaPlayerApp(tk.Tk):
         def time_to_milliseconds(time_str):
             hh, mm, ss = time_str.split(":")
             return int(hh) * 3600000 + int(mm) * 60000 + int(ss) * 1000
+        
+        self.model = EventData()
         with open(file_path, "r") as file:
             lines = file.readlines()
             for line in lines:
