@@ -493,6 +493,22 @@ class TestVideoGenerator(unittest.TestCase):
             "              6  (+2) 0:00:16",
         ]), "\n"+str(game_sheet)
         
+    def test_build_match_sheet_with_several_match_part_should_add_1_second_each_2_files(self):
+        match_events_1= EventFile().extract_match_events([
+            "1;A;0:03;2",
+        ])
+        match_events_2 = EventFile().extract_match_events([
+            "1;A;0:03;2",
+        ])
+        match_events_3 = EventFile().extract_match_events([
+            "1;A;0:03;2",
+        ])
+        game_sheet=MatchPart.game_sheet_multi_part([match_events_1, match_events_2, match_events_3])
+        assert str(game_sheet) == "\n".join([
+            "0:00:03 (+1)  1              ",
+            "0:00:06 (+1)  2              ",
+            "0:00:10 (+1)  3              ",
+        ]), "\n"+str(game_sheet)
         
         
 if __name__ == "__main__":

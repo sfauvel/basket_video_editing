@@ -108,13 +108,13 @@ class MatchPart:
             event.time_in_seconds += start_time
             return event
         
-        start_point=0
-        result=[]
         match=MatchPart(0, 0, [])
         last_time=0
+        is_even = False
         for part in parts:
             match.events += [adjust_time(event, last_time) for event in part.events]
-            last_time = match.events[-1].time_in_seconds
+            last_time = match.events[-1].time_in_seconds + (1 if is_even else 0)
+            is_even = not is_even
             
         return match.game_sheet()[0]
 
