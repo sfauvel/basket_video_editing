@@ -259,17 +259,16 @@ Dialogue: 2,0:00:00.00,{build_time_str(duration)}.00,Quarter,,0,0,0,,{states[-1]
         # print(csv_file)
         # print(states[-1])
         # # print( '\n'.join([str(s) for s in states]))
+    
+        os.makedirs(output_folder, exist_ok=True)
+        
+        output_file=f"{output_folder}/{filename}.ass"
+        if not os.path.isfile(output_file):
+            with open(f"{output_file}", "w") as file_ass:
+                file_ass.write(ass_file_content)
+
     else:
         print("    No csv file")
-    
-    
-    os.makedirs(output_folder, exist_ok=True)
-    
-    output_file=f"{output_folder}/{filename}.ass"
-    if not os.path.isfile(output_file):
-        with open(f"{output_file}", "w") as file_ass:
-            file_ass.write(ass_file_content)
-
     
     print(f"    Final score: {score}")  
     
