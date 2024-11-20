@@ -4,13 +4,15 @@ import time
 import tkinter as tk
 import vlc
 from tkinter import filedialog
+from tkinter.ttk import Combobox
 from datetime import timedelta
 
 class Event:
-    def __init__(self, time, points, team_name):
+    def __init__(self, time, points, team_name, quarter=None):
         self.time = time
         self.points = points
         self.team_name = team_name
+        self.quarter = quarter
 
     def __str__(self):
         return f"{self.time}: {self.points} pts for {self.team_name}"
@@ -24,12 +26,12 @@ class EventData:
     def __init__(self):
         self.events = []
 
-    def add_event(self, time, points, team_name):
-        self.events.append(Event(time, points, team_name))
+    def add_event(self, time, points, team_name, quarter=None):
+        self.events.append(Event(time, points, team_name, quarter))
         self.events = sorted(self.events, key=lambda event: event.time)
     
     def save(self, stream):
-        cvs_format = lambda event: f"{event.points};{event.team_name};{build_time_str(event.time)}"
+        cvs_format = lambda event: f"{event.points};{event.team_name};{build_time_str(event.time)};{event.quarter}"
         "\n".join([cvs_format(event) for event in self.events])
         
         stream.write("\n".join([cvs_format(event) for event in self.events]))
@@ -83,11 +85,15 @@ class MediaPlayerApp(tk.Tk):
         
         def length_changed(event):
             total_duration = event.u.new_length
-            self.model.add_event(0, int(0), "-")
-            self.model.add_event(total_duration, int(0), "-")
-            self.refresh_events()
+            self.add_start_and_end_events(total_duration)
             
         self.media_player.event_manager().event_attach(vlc.EventType.MediaPlayerLengthChanged, length_changed)
+        
+    def add_start_and_end_events(self, total_duration):
+        quarter = self.quarter_listbox.get()
+        self.model.add_event(0, int(0), "-", quarter)
+        self.model.add_event(total_duration, int(0), "-", quarter)
+        self.refresh_events()
         
     def create_widgets(self):
 
@@ -135,6 +141,10 @@ class MediaPlayerApp(tk.Tk):
             
             self.load_csv_file_button = mk_button(self.files_frame, "Load", self.select_csv)
             self.load_csv_file_button.pack(side=tk.LEFT, pady=5, padx=5)
+            
+            self.quarter_listbox = Combobox(self.files_frame, height=20, width=2, values=["1","2","3","4"], state="readonly", font="Verdana 16")
+            self.quarter_listbox.pack(pady=5)
+            self.quarter_listbox.set("1")
             
         def mk_point_button(team, points, shortcut):
             command = lambda: self.point(points, team.name)
@@ -302,7 +312,7 @@ class MediaPlayerApp(tk.Tk):
             print(f"{points} point for team {team_name}: {current_time_str}")  
             
             print(f"point time: {current_time}")
-            self.model.add_event(current_time, points, team_name)
+            self.model.add_event(current_time, points, team_name, self.quarter_listbox.get())
             self.refresh_events()
             self.points_listbox.see(len(self.model.events)+1)
         
@@ -310,7 +320,8 @@ class MediaPlayerApp(tk.Tk):
         self.points_listbox.delete(0, tk.END)
         for event in self.model.events:
             time_str = build_time_str(event.time)
-            self.points_listbox.insert(tk.END, f"{time_str}: Team {event.team_name}: {event.points} pts")
+            quarter = f", {event.quarter}/4" if event.quarter else ""
+            self.points_listbox.insert(tk.END, f"{time_str}: Team {event.team_name}: {event.points} pts{quarter}")
         
     def select_file(self):
         file_path = filedialog.askopenfilename(
@@ -349,9 +360,8 @@ class MediaPlayerApp(tk.Tk):
         with open(file_path, "r") as file:
             lines = file.readlines()
             for line in lines:
-                points, team_name, time = line.split(";")
-                
-                self.model.add_event(time_to_milliseconds(time), int(points), team_name)
+                points, team_name, time, quarter = line.strip().split(";")
+                self.model.add_event(time_to_milliseconds(time), int(points), team_name, quarter)
         self.refresh_events()
     
     def build_time_label(self):
@@ -373,10 +383,13 @@ class MediaPlayerApp(tk.Tk):
             
     def launch_video(self, video_path):
         if video_path:
+            self.model.events = []
+            self.refresh_events()
+            
             self.current_file = video_path
             self.refresh_time()
             self.play_video()
-
+            
     def play_video(self):
         if not self.playing_video:
             media = self.instance.media_new(self.current_file)
