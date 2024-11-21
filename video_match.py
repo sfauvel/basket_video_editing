@@ -21,6 +21,11 @@ class Score:
         
     def __str__(self) -> str:
         return f"{self.team_a} - {self.team_b}"
+    
+    def __eq__(self, other):
+        return isinstance(other, Score) \
+            and self.team_a == other.team_a \
+            and self.team_b == other.team_b
 
 class MatchEvent:
     def __init__(self, start_time, end_time):
@@ -80,6 +85,21 @@ class MatchPart:
             states[-1].end = full_time
         return states 
     
+    def concat_match_parts(parts):
+        def adjust_time(event, start_time):
+            event.time_in_seconds += start_time
+            return event
+        
+        match=MatchPart(0, 0, [])
+        last_time=0
+        is_even = False
+        for part in parts:
+            match.events += [adjust_time(event, last_time) for event in part.events]
+            last_time = match.events[-1].time_in_seconds + (1 if is_even else 0)
+            is_even = not is_even
+            
+        return match
+    
     def game_sheet(self, start_point=0):
         scoreA=[]
         scoreB=[]
@@ -97,23 +117,45 @@ class MatchPart:
             
             points=i+1+start_point
             lines.append(f"{a}{points}{b}")
-        return ("\n".join(lines), points)
+        return "\n".join(lines)
 
-    def game_sheet_multi_part(parts):
+    def game_sheet_multi_part(parts):        
+        return MatchPart.concat_match_parts(parts).game_sheet()
+
+    def display(self, team_a, team_b):
+        def format_score(score):
+            return f"{team_a} {str(score.team_a).rjust(3)} - {str(score.team_b).ljust(3)} {team_b} "
         
-        def adjust_time(event, start_time):
-            event.time_in_seconds += start_time
-            return event
+        def max_length(events):
+            score = Score(0,0)
+            max_text_length=0
+            for event in [event for event in events if event.points > 0]:
+                score = score.add(event.points, event.team)
+                max_text_length = max(max_text_length, len(format_score(score)))
+            return max_text_length
+                  
+        max_text_length = max_length(self.events)
         
-        match=MatchPart(0, 0, [])
-        last_time=0
-        is_even = False
-        for part in parts:
-            match.events += [adjust_time(event, last_time) for event in part.events]
-            last_time = match.events[-1].time_in_seconds + (1 if is_even else 0)
-            is_even = not is_even
+        lines=[]
+        score = Score(0,0)
+        for event in [event for event in self.events if event.points > 0]:
+            score = score.add(event.points, event.team)
             
-        return match.game_sheet()[0]
+            line = f"{seconds_to_time(event.time_in_seconds)}".ljust(10) + f"{format_score(score)}".ljust(max_text_length+3) + f"({score.team_a-score.team_b})".ljust(6) + f"{event.quarter_time} qt"
+      
+            lines.append(line)
+            
+        return "\n".join(lines)
+    
+    def score_by_quarter(self):
+        scores = {}
+        for event in [event for event in self.events if event.points > 0]:
+            quarter = event.quarter_time
+            if not quarter in scores:
+                scores[quarter] = Score(0,0)
+            scores[quarter] = scores[quarter].add(event.points, event.team)
+                
+        return scores
 
 class EventFile:
     

@@ -423,20 +423,20 @@ class TestVideoGenerator(unittest.TestCase):
             "2;A;0:03;2",
         ])
         
-        assert match_events.game_sheet() == ("\n".join([
+        assert match_events.game_sheet() == "\n".join([
             "              1              ",
             "0:00:03 (+2)  2              ",
-        ]), 2), "\n"+str(match_events.game_sheet())
+        ]), "\n"+str(match_events.game_sheet())
         
     def test_build_match_sheet_with_B_score(self):
         match_events = EventFile().extract_match_events([
             "2;B;0:03;2",
         ])
         
-        assert match_events.game_sheet() == ("\n".join([
+        assert match_events.game_sheet() == "\n".join([
             "              1              ",
             "              2  (+2) 0:00:03",
-        ]),2), "\n"+str(match_events.game_sheet())
+        ]), "\n"+str(match_events.game_sheet())
         
         
     def test_build_match_sheet_with_some_scores(self):
@@ -446,23 +446,23 @@ class TestVideoGenerator(unittest.TestCase):
             "3;A;0:37;2",
         ])
         
-        assert match_events.game_sheet() == ("\n".join([
+        assert match_events.game_sheet() == "\n".join([
             "              1  (+1) 0:00:25",
             "0:00:13 (+2)  2              ",
             "              3              ",
             "              4              ",
             "0:00:37 (+3)  5              ",
-        ]), 5), "\n"+str(match_events.game_sheet())
+        ]), "\n"+str(match_events.game_sheet())
         
     def test_build_match_sheet_start_at(self):
         match_events = EventFile().extract_match_events([
             "2;A;0:03;2",
         ])
         
-        assert match_events.game_sheet(5) == ("\n".join([
+        assert match_events.game_sheet(5) == "\n".join([
             "              6              ",
             "0:00:03 (+2)  7              ",
-        ]),7), "\n"+str(match_events.game_sheet())
+        ]), "\n"+str(match_events.game_sheet())
         
         
     def test_build_match_sheet_should_not_add_when_no_points(self):
@@ -471,12 +471,10 @@ class TestVideoGenerator(unittest.TestCase):
             "0;-;0:04;2",
             "1;B;0:05;2",
         ])
-        # gamesheet = GameSheet()
-        # gamesheet.add(match_events)
-        assert match_events.game_sheet() == ("\n".join([
+        assert match_events.game_sheet() == "\n".join([
             "              1  (+1) 0:00:05",
             "0:00:03 (+2)  2              ",
-        ]), 2), "\n"+str(match_events.game_sheet())
+        ]), "\n"+str(match_events.game_sheet())
         
     def test_build_match_sheet_with_several_match_part(self):
         match_events_1= EventFile().extract_match_events([
@@ -516,6 +514,39 @@ class TestVideoGenerator(unittest.TestCase):
             "0:00:10 (+1)  3              ",
         ]), "\n"+str(game_sheet)
         
+    def test_build_match_display(self):
+        match_events = EventFile().extract_match_events([
+            "2;A;0:03;2",
+            "0;-;0:04;2",
+            "1;B;0:05;2",
+        ])
+        display = match_events.display("TEAM A", "TEAM B") 
+        assert display == "\n".join([
+            "0:00:03   TEAM A   2 - 0   TEAM B    (2)   2 qt",
+            "0:00:05   TEAM A   2 - 1   TEAM B    (1)   2 qt",
+        ]), "\n"+display
+        
+    def test_score_by_quarter(self):
+        by_quarter = EventFile().extract_match_events([
+            "2;A;0:03;1",
+            "0;-;0:04;1",
+            "1;B;0:05;1",
+            "2;B;0:06;2",
+            "3;A;0:07;2",
+            "1;A;0:08;3",
+        ]).score_by_quarter()
+        
+        assert Score(2,1) == Score(2,1) 
+        assert by_quarter[1] == Score(2,1), f"quarter 1 => {by_quarter[1]}"
+        assert by_quarter[2] == Score(3,2), f"quarter 2 => {by_quarter[2]}"
+        assert by_quarter[3] == Score(1,0), f"quarter 3 => {by_quarter[3]}"
+        assert 4 not in by_quarter, f"quarter 4 => {by_quarter[4]}"
+    
+    def test_score_equality(self):
+        assert Score(2,1) == Score(2,1) 
+        assert Score(2,4) != Score(2,1) 
+        assert Score(5,1) != Score(2,1) 
+         
         
 if __name__ == "__main__":
     unittest.main()

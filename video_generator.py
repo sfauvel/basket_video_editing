@@ -518,28 +518,23 @@ class MatchVideo:
         higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_tous_les_points", all_points, duration_before, duration_after, build_input_video_filename)
         
     
-    def display_by_quarter(self, stats):
+    def display_by_quarter(self, match_parts):
  
-        def compute_score(quarter, score):            
-            last_quarter_score = stats[quarter-1].score if quarter > 1 else Score(0, 0)
-            score_a = score.team_a-last_quarter_score.team_a
-            score_b = score.team_b-last_quarter_score.team_b
-            return Score(score_a, score_b)
+        by_quarter = match_parts.score_by_quarter()
+        last_quarter = max([int(quarter) for quarter in by_quarter.keys()])
         
-        result = ""
-        for (quarter, stat) in stats.items():
-            result += f"{quarter}: " + f"{stat.score}".rjust(8)  + f" {compute_score(quarter, stat.score)}".rjust(10) + "\n"
-            
         result = ""
         result += f"[%autowidth]\n|====\n"
         result += f"| Qt | A la fin | pendant \n"
         
-        for (quarter, stat) in stats.items():
-            result += f"| {quarter} |  {stat.score} | {compute_score(quarter, stat.score)}\n"
+        total_score = Score(0, 0)
+        for quarter in range(1, last_quarter+1):
+            score = by_quarter[quarter]
+            total_score = Score(total_score.team_a+score.team_a, total_score.team_b+score.team_b)
+            result += f"| {quarter} | {total_score} | {score}\n"
         result += f"|====\n"
             
         return result;
-        
         
     def display_graph(self, infos):
         keep_when_score = []
@@ -649,62 +644,57 @@ width="700" height="500"     style="background-color:grey">
                 self.team_a[record.points] += 1
             if record.team == "B":
                 self.team_b[record.points] += 1
-            
-    class Stat:
-        def __init__(self, score, points):
-            self.score = score
-            self.points = points
     
     def display_score(self):
         score = Score()
         infos = [(self.format_score(score), score.team_a, score.team_b, 0, 0, EventRecord(0,"",0,1))]
         
         start_time = 0
-        quarter_stats={}
-        last_points = MatchVideo.PointStats() 
         for file in files_sorted(f'{self.csv_folder}/*.csv'):
             print(file)
             filename=os.path.basename(file).replace(".csv", "")
             extracted_infos = EventFile().extract_infos(f"{self.csv_folder}/{filename}.csv", score.team_a, score.team_b)            
             infos += [(self.format_score(Score(info[0], info[1])), info[0], info[1], start_time+info[2], start_time+info[3], info[4]) for info in extracted_infos[1:]]
             
-            (_,a,b,_,start_time,record) = infos[-1]
-            
-            for extracted in extracted_infos:
-                last_points.add(extracted[4])
-                
-            score = Score(a, b)
-            quarter_stats[record.quarter_time] = MatchVideo.Stat(score, last_points)
+            (_,a,b,_,start_time,_) = infos[-1]
 
-        match_parts = [MatchPart.build_from_csv(f"{file}") for file in files_sorted(f'{self.csv_folder}/*.csv')]
-        game_sheet=MatchPart.game_sheet_multi_part(match_parts)
+            score = Score(a, b)
+
+        match_parts = MatchPart.concat_match_parts([MatchPart.build_from_csv(f"{file}") for file in files_sorted(f'{self.csv_folder}/*.csv')])        
+        game_sheet=match_parts.game_sheet()
         print(f"========\n{game_sheet}\n==========")
          
-        max_text_length = max([len(text) for (text, _,_, _, _,_) in infos])
-        output = "\n".join([f"{seconds_to_time(time)}".ljust(10) + f"{text}".ljust(max_text_length+3) + f"({score_a-score_b})".ljust(6) + f"{record.quarter_time} qt" for (text, score_a, score_b, time, _,record) in infos])
-        
-       
+        ## Display by quarter
         result = ""
-        result += self.display_by_quarter(quarter_stats)
+        result += self.display_by_quarter(match_parts)
         result += "\n\n"
+        
+        last_points = MatchVideo.PointStats() 
+        for event in [event for event in match_parts.events if event.points > 0]:
+            last_points.add(event)
+       
+        ## Display by points
         result += f"[%autowidth]\n|====\n"
         result += f"| Equipe | 1pt | 2pts | 3pts \n"
         result += f"| {self.team_a} |  {last_points.team_a[1]} | {last_points.team_a[2]} | {last_points.team_a[3]}\n"
         result += f"| {self.team_b} | {last_points.team_b[1]} | {last_points.team_b[2]} | {last_points.team_b[3]}\n"
         result += f"|====\n"
         
+        ## Display graph
         result += "\n"
         try:
             result += self.display_graph(infos) 
         except Exception as e:  
             result += f"Error: {e}"
             print(f"!!!!!!!!!!!!\nError: {e}\n!!!!!!!!!!!!")
+            raise e
         
+        ## Write to stat file
+        # print(result)        
         with (open(f"{self.root_folder}/stats.adoc", "w")) as stats_file:
             stats_file.write(result)
             
-        # print(result)
-        return output
+        return match_parts.display(self.team_a, self.team_b)
 
 
 def higlights_sequence(csv_folder, 
