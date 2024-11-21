@@ -402,7 +402,7 @@ class MatchVideo:
         self.team_b = team_b
         
     def format_score(self, score):
-        return f"{self.team_a} {str(score.team_a).rjust(3)} - {str(score.team_b).ljust(3)} {self.team_b} ({score.team_a-score.team_b})"
+        return f"{self.team_a} {str(score.team_a).rjust(3)} - {str(score.team_b).ljust(3)} {self.team_b} "
         
     def init_csv(self):
         if not os.path.isdir(self.video_folder):
@@ -557,8 +557,8 @@ class MatchVideo:
         scores = [b-a for (_,a,b,_,start_time,quarter_time) in infos]
         
         quarter_index = {}
-        for (index, (_,_,_,_,_,quarter_time)) in enumerate(infos):
-            quarter_index[quarter_time-1] = index
+        for (index, (_,_,_,_,_,record)) in enumerate(infos):
+            quarter_index[record.quarter_time-1] = index
         
         formated_scores = "\n".join([f"{index}, {value}" for (index, value) in enumerate(scores)])
         delta_max=max(scores)
@@ -658,30 +658,32 @@ width="700" height="500"     style="background-color:grey">
     
     def display_score(self):
         score = Score()
+        infos = [(self.format_score(score), score.team_a, score.team_b, 0, 0, EventRecord(0,"",0,1))]
         
-        infos = [(self.format_score(score), score.team_a, score.team_b, 0, 0, 1)]
         start_time = 0
         quarter_stats={}
         last_points = MatchVideo.PointStats() 
         for file in files_sorted(f'{self.csv_folder}/*.csv'):
             print(file)
             filename=os.path.basename(file).replace(".csv", "")
-            extracted_infos = EventFile().extract_infos(f"{self.csv_folder}/{filename}.csv", score.team_a, score.team_b)
+            extracted_infos = EventFile().extract_infos(f"{self.csv_folder}/{filename}.csv", score.team_a, score.team_b)            
             infos += [(self.format_score(Score(info[0], info[1])), info[0], info[1], start_time+info[2], start_time+info[3], info[4]) for info in extracted_infos[1:]]
             
-            (_,a,b,_,start_time,quarter_time) = infos[-1]
+            (_,a,b,_,start_time,record) = infos[-1]
             
             for extracted in extracted_infos:
-                last_points.add(extracted[5])
+                last_points.add(extracted[4])
                 
             score = Score(a, b)
-            quarter_stats[quarter_time] = MatchVideo.Stat(score, last_points)
+            quarter_stats[record.quarter_time] = MatchVideo.Stat(score, last_points)
 
         match_parts = [MatchPart.build_from_csv(f"{file}") for file in files_sorted(f'{self.csv_folder}/*.csv')]
         game_sheet=MatchPart.game_sheet_multi_part(match_parts)
         print(f"========\n{game_sheet}\n==========")
          
-        output = "\n".join([f"{time}:".ljust(6) + f"{text}" + f" - {quarter_time} qt" for (text, _,_, time, _,quarter_time) in infos])
+        max_text_length = max([len(text) for (text, _,_, _, _,_) in infos])
+        output = "\n".join([f"{seconds_to_time(time)}".ljust(10) + f"{text}".ljust(max_text_length+3) + f"({score_a-score_b})".ljust(6) + f"{record.quarter_time} qt" for (text, score_a, score_b, time, _,record) in infos])
+        
        
         result = ""
         result += self.display_by_quarter(quarter_stats)

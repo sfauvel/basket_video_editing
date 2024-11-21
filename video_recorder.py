@@ -25,6 +25,14 @@ def time_to_seconds(time):
         
     return int(seconds)
     
+def seconds_to_time(time_in_seconds):
+    hour = int(time_in_seconds / 3600)
+    time_in_seconds -= hour * 3600
+    minutes = int(time_in_seconds / 60)
+    time_in_seconds -= minutes * 60
+    seconds = time_in_seconds
+    return f"{hour:01d}:{minutes:02d}:{seconds:02d}"
+
 class Recorder:
     def wait_for_points(self, ):
         print("Entrez les points et l'équipe (exemple: 2a, 1a,...)")

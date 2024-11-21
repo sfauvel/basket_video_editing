@@ -130,7 +130,7 @@ class EventFile:
             team = record.team
             end_time = record.time_in_seconds + initial_start_time
             
-            infos.append((a, b, start_time, end_time, record.quarter_time, record))
+            infos.append((a, b, start_time, end_time, record))
                        
             score = score.add(points, team)
             a = score.team_a

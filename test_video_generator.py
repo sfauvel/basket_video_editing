@@ -177,10 +177,10 @@ class TestVideoGenerator(unittest.TestCase):
             "3;A;0:07;3",
             "0;A;0:10;3",
         ], 0, 0, 0)
-        assert infos[0] == (0, 0, 0, 3, 3, EventRecord.from_csv("2;A;0:03;3"))
-        assert infos[1] == (2, 0, 3, 5, 3, EventRecord.from_csv("1;B;0:05;3"))
-        assert infos[2] == (2, 1, 5, 7, 3, EventRecord.from_csv("3;A;0:07;3"))
-        assert infos[3] == (5, 1, 7, 10, 3,EventRecord.from_csv("0;A;0:10;3"))
+        assert infos[0] == (0, 0, 0, 3, EventRecord.from_csv("2;A;0:03;3"))
+        assert infos[1] == (2, 0, 3, 5, EventRecord.from_csv("1;B;0:05;3"))
+        assert infos[2] == (2, 1, 5, 7, EventRecord.from_csv("3;A;0:07;3"))
+        assert infos[3] == (5, 1, 7, 10, EventRecord.from_csv("0;A;0:10;3"))
         assert len(infos) == 4
         
     def test_extract_infos_with_several_formats_with_an_initial_score_and_time(self):
@@ -189,8 +189,8 @@ class TestVideoGenerator(unittest.TestCase):
             "0;A;0:08;4",
         ], 5, 8, 10)
         
-        assert infos[0] == (5, 8, 10, 13, 4, EventRecord.from_csv("2;A;0:03;4")), infos[0]
-        assert infos[1] == (7, 8, 13, 18, 4, EventRecord.from_csv("0;A;0:08;4")), infos[1]
+        assert infos[0] == (5, 8, 10, 13, EventRecord.from_csv("2;A;0:03;4")), infos[0]
+        assert infos[1] == (7, 8, 13, 18, EventRecord.from_csv("0;A;0:08;4")), infos[1]
 
     def test_extract_match_events_can_read_event_without_team(self):
         match_events = EventFile().extract_match_events([
@@ -368,7 +368,13 @@ class TestVideoGenerator(unittest.TestCase):
         assert 4*60+25 == time_to_seconds("4:25")
         assert 2*3600+14*60+25 == time_to_seconds("134:25")
         assert 1*3600+14*60+25 == time_to_seconds("1:14:25")
-        assert 1*3600+14*60+25 == time_to_seconds("1:14:25")
+        
+        
+    def test_seconds_to_time(self):
+        assert seconds_to_time(5) == "0:00:05"
+        assert seconds_to_time(4*60+25) == "0:04:25"
+        assert seconds_to_time(1*3600+14*60+25) == "1:14:25"
+        
         
     def should_throw_an_exception(self, time):
         try:
