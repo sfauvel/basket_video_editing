@@ -9,6 +9,7 @@ import sys
 
 import moviepy.editor as mpy
 from moviepy.video import fx
+from video_graph import *
 
 
 from video_match import *
@@ -535,104 +536,6 @@ class MatchVideo:
         result += f"|====\n"
             
         return result;
-        
-    def display_graph(self, infos):
-        keep_when_score = []
-        last_a = None
-        last_b = None
-        for info in infos:
-            if info[1] != last_a or info[2] != last_b:
-                keep_when_score.append(info)
-            last_a=info[1]
-            last_b=info[2]
-                
-        infos = keep_when_score
-       
-        scores = [b-a for (_,a,b,_,start_time,quarter_time) in infos]
-        
-        quarter_index = {}
-        for (index, (_,_,_,_,_,record)) in enumerate(infos):
-            quarter_index[record.quarter_time-1] = index
-        
-        formated_scores = "\n".join([f"{index}, {value}" for (index, value) in enumerate(scores)])
-        delta_max=max(scores)
-        delta_min=min(scores)
-        print(f"delta_max: {delta_max}, delta_min: {delta_min}")
-        
-        scale_x=10
-        scale_y=-5
-       
-        border_width=30
-        margin_x=30
-        height=440
-        graph_x_0=border_width+margin_x
-        graph_y_0=height/2+border_width
-        
-        
-        result = """++++
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg"
-width="700" height="500"     style="background-color:grey">
-<style>
-.graph {
-    stroke:rgb(200,200,200);
-    stroke-width:1;
-}
-.curve {
-    fill:none;
-    stroke-width:0.05;
-    marker: url(#markerCircle);
-    stroke:black;
-}
-</style>
-"""
-        result += f"""
-<defs>
-    <marker id="markerCircle" markerWidth="8" markerHeight="8" refX="5" refY="5">
-        <circle cx="5" cy="5" r="0.02" style="stroke: none; fill:#000000;"/>
-    </marker>
-</defs>
-<svg class="graph">
-    <rect fill="white" width="640" height="440" x="30" y="30"/>
-    <g class="grid">
-        <line x1="{graph_x_0}" x2="{graph_x_0}" y1="440" y2="60"/>
-    </g>
-    <g class="grid">
-        <line x1="{graph_x_0}" x2="640" y1="{graph_y_0}" y2="{graph_y_0}"/>
-    </g>
-
-    <text x="300" y="50" >Ecart de points</text>
-"""
-
-        for quarter in quarter_index.values():
-            result += f"""<line x1="{graph_x_0+quarter*scale_x}" x2="{graph_x_0+quarter*scale_x}" y1="440" y2="60"/>"""
-        
-
-        result += f"""
-    <line x1="{graph_x_0+quarter_index[1]*scale_x}" x2="{graph_x_0+quarter_index[1]*scale_x}" y1="440" y2="60"/>
-        
-    <text x="35" y="{graph_y_0+delta_max*scale_y+2}">{delta_max}</text>
-    <line x1="56" x2="64" y1="{graph_y_0+delta_max*scale_y}" y2="{graph_y_0+delta_max*scale_y}"/>
-    <text x="35" y="{graph_y_0+delta_min*scale_y+2}">{delta_min}</text>
-    <line x1="56" x2="64" y1="{graph_y_0+delta_min*scale_y}" y2="{graph_y_0+delta_min*scale_y}"/>
-    
-    <text x="35" y="{graph_y_0+2}">0</text>
-    <line x1="60" x2="60" y1="324" y2="328"/>
-    <!-- text x="634" y="349"></text-->
-    <line x1="639" x2="639" y1="324" y2="328"/>
-</svg>
-"""
-
-        result += f"""
-<polyline style="stroke:blue" class="curve" transform="translate({graph_x_0}, {graph_y_0}) scale({scale_x} {scale_y})" points="
-    {formated_scores}
-"/>
-
-</svg>
-++++
-        """
-        
-        return result
     
     class PointStats:        
         def __init__(self):
@@ -646,20 +549,6 @@ width="700" height="500"     style="background-color:grey">
                 self.team_b[record.points] += 1
     
     def display_score(self):
-        score = Score()
-        infos = [(self.format_score(score), score.team_a, score.team_b, 0, 0, EventRecord(0,"",0,1))]
-        
-        start_time = 0
-        for file in files_sorted(f'{self.csv_folder}/*.csv'):
-            print(file)
-            filename=os.path.basename(file).replace(".csv", "")
-            extracted_infos = EventFile().extract_infos(f"{self.csv_folder}/{filename}.csv", score.team_a, score.team_b)            
-            infos += [(self.format_score(Score(info[0], info[1])), info[0], info[1], start_time+info[2], start_time+info[3], info[4]) for info in extracted_infos[1:]]
-            
-            (_,a,b,_,start_time,_) = infos[-1]
-
-            score = Score(a, b)
-
         match_parts = MatchPart.concat_match_parts([MatchPart.build_from_csv(f"{file}") for file in files_sorted(f'{self.csv_folder}/*.csv')])        
         game_sheet=match_parts.game_sheet()
         print(f"========\n{game_sheet}\n==========")
@@ -669,21 +558,28 @@ width="700" height="500"     style="background-color:grey">
         result += self.display_by_quarter(match_parts)
         result += "\n\n"
         
+        ## Display by points
         last_points = MatchVideo.PointStats() 
         for event in [event for event in match_parts.events if event.points > 0]:
             last_points.add(event)
        
-        ## Display by points
         result += f"[%autowidth]\n|====\n"
         result += f"| Equipe | 1pt | 2pts | 3pts \n"
         result += f"| {self.team_a} |  {last_points.team_a[1]} | {last_points.team_a[2]} | {last_points.team_a[3]}\n"
         result += f"| {self.team_b} | {last_points.team_b[1]} | {last_points.team_b[2]} | {last_points.team_b[3]}\n"
-        result += f"|====\n"
+        result += f"|====\n\n"
         
+
         ## Display graph
-        result += "\n"
         try:
-            result += self.display_graph(infos) 
+            score = Score()   
+            infos = [(score.team_a, score.team_b, EventRecord(0,"",0,1))]
+            
+            for event in [event for event in match_parts.events if event.points > 0]:
+                score = score.add(event.points, event.team)
+                infos += [(score.team_a, score.team_b, event)]
+       
+            result += display_graph(infos) 
         except Exception as e:  
             result += f"Error: {e}"
             print(f"!!!!!!!!!!!!\nError: {e}\n!!!!!!!!!!!!")
