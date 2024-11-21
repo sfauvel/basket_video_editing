@@ -12,7 +12,6 @@ from moviepy.video import fx
 
 
 from video_match import *
-from video_recorder import *
 
 SB_LOGO_PATH = "../SLB_Logo_OK_light.jpg"
 SCORE_FONT_SIZE = 50
@@ -907,8 +906,6 @@ if __name__ == "__main__":
         # Compress with direct write_videofile fps=24: 457.8mo
         # Compress with direct write_videofile fps=24, medium: 473.6.8mo
         #audio_analyze("Match_2024_02_04/output/VID_20240204_110324.output.mp4")
-    elif args[1] == "record":
-        Recorder().record_input("tmp/output.csv")
     
     elif args[1] == "validate":
         (output, valid) = EventRecord.validate(match.csv_folder)

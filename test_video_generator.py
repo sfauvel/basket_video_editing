@@ -4,22 +4,22 @@ import os
 import shutil
 import unittest
 
-#from video_generator import *
 from video_recorder import *
 from video_match import *
+from video_utils import *
 from video_generator import collapse_overlaps
 
 
 class TestEventRecord(unittest.TestCase):
     def test_event_record_to_csv(self):
-        assert "3;A;0:12;2" == EventRecord(3, "A", 12, 2).to_csv()
-        assert "3;A;0:02;2" == EventRecord(3, "A", 2, 2).to_csv(), EventRecord(3, "A", 2, 2).to_csv()
+        assert "3;A;0:00:12;2" == EventRecord(3, "A", 12, 2).to_csv()
+        assert "3;A;0:00:02;2" == EventRecord(3, "A", 2, 2).to_csv(), EventRecord(3, "A", 2, 2).to_csv()
         
     def test_event_record_to_csv_with_minutes(self):
-        assert "3;A;2:12;2" == EventRecord(3, "A", 132, 2).to_csv()
+        assert "3;A;0:02:12;2" == EventRecord(3, "A", 132, 2).to_csv()
         
     def test_event_record_to_csv_without_quarter(self):
-        assert "3;A;0:12" == EventRecord(3, "A", 12, None).to_csv()
+        assert "3;A;0:00:12" == EventRecord(3, "A", 12, None).to_csv()
 
     def test_event_record_from_csv(self):
         record = EventRecord.from_csv("3;A;0:12;2")
@@ -122,7 +122,7 @@ class TestEventRecord(unittest.TestCase):
         (result, valid) = EventRecord.validate("tmp")
         assert valid ==False
         assert "tmp1.csv: Invalid" in result, result
-        assert "- Line 3: 2;B;1:10;4 -- Time should not be less than 1:10" in result, result
+        assert "- Line 3: 2;B;1:10;4 -- Time should not be less than 0:01:10" in result, result
   
 class TestVideoGenerator(unittest.TestCase):
 

@@ -1,37 +1,12 @@
+# A command line tool to record events during a game and generate a csv file.
+# It's the equivalent to a score board used during a game.
+# You can launch it and watching a video at the same time to record event as they happen. 
+
 import glob
 import re
 
 from datetime import timedelta, datetime
-
-
-def time_to_seconds(time):
-    split = time.split(":")
-    if len(split) < 2  or 3 < len(split):
-        raise Exception(f"Invalid time: '{time}'")
-    for number in split:
-        if not re.match(r'^(\d)+$', number):
-            raise Exception(f"Invalid time: '{time}'")
-    
-    seconds = 0
-    
-    if len(split) >= 1:
-        seconds += int(split[-1])
-    
-    if len(split) >= 2:
-        seconds += 60*int(split[-2])
-    
-    if len(split) >= 3:
-        seconds += 60*60*int(split[-3])
-        
-    return int(seconds)
-    
-def seconds_to_time(time_in_seconds):
-    hour = int(time_in_seconds / 3600)
-    time_in_seconds -= hour * 3600
-    minutes = int(time_in_seconds / 60)
-    time_in_seconds -= minutes * 60
-    seconds = time_in_seconds
-    return f"{hour:01d}:{minutes:02d}:{seconds:02d}"
+from video_utils import time_to_seconds, seconds_to_time
 
 class Recorder:
     def wait_for_points(self, ):
@@ -162,9 +137,10 @@ class EventRecord:
         return ("\n".join([result for (result, is_valid) in results]), is_valid)
     
     def _seconds_to_string(time_in_seconds):
-        minutes = int(time_in_seconds / 60)
-        seconds = time_in_seconds % 60
-        return f"{minutes}:{seconds:02d}"
+        return seconds_to_time(time_in_seconds)
+        # minutes = int(time_in_seconds / 60)
+        # seconds = time_in_seconds % 60
+        # return f"{minutes}:{seconds:02d}"
         
     def to_csv(self):
         values = [str(self.points), self.team, EventRecord._seconds_to_string(self.time_in_seconds)]
@@ -180,3 +156,6 @@ class EventRecord:
 
     def __str__(self) -> str:
         return f"points:{self.points}, team:{self.team}, time_in_seconds:{self.time_in_seconds}, quarter_time:{self.quarter_time}"
+
+if __name__ == "__main__":
+    Recorder().record_input("tmp/output.csv")

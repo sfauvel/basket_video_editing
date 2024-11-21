@@ -1,4 +1,7 @@
+# Structure to manage a match
+
 from video_recorder import EventRecord
+from video_utils import *
 
 def read_content_of_file(file): 
     with open(file, "r") as input_file:
@@ -78,18 +81,12 @@ class MatchPart:
         return states 
     
     def game_sheet(self, start_point=0):
-        
-        def _seconds_to_string(time_in_seconds):
-            minutes = int(time_in_seconds / 60)
-            seconds = time_in_seconds % 60
-            return f"0:{minutes:02d}:{seconds:02d}"
-        
         scoreA=[]
         scoreB=[]
         for event in [event for event in self.events if event.points > 0]:
             score_to_append = scoreA if event.team == "A" else scoreB
             score_to_append += [None] * (event.points-1)
-            score_to_append += [(event.points, _seconds_to_string(event.time_in_seconds))]
+            score_to_append += [(event.points, seconds_to_time(event.time_in_seconds))]
 
         empty_score="              "
         lines=[]
