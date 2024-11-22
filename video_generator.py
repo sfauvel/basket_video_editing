@@ -9,9 +9,8 @@ import sys
 
 import moviepy.editor as mpy
 from moviepy.video import fx
+
 from video_graph import *
-
-
 from video_match import *
 
 SB_LOGO_PATH = "../SLB_Logo_OK_light.jpg"
@@ -569,17 +568,9 @@ class MatchVideo:
         result += f"| {self.team_b} | {last_points.team_b[1]} | {last_points.team_b[2]} | {last_points.team_b[3]}\n"
         result += f"|====\n\n"
         
-
         ## Display graph
         try:
-            score = Score()   
-            infos = [(score.team_a, score.team_b, EventRecord(0,"",0,1))]
-            
-            for event in [event for event in match_parts.events if event.points > 0]:
-                score = score.add(event.points, event.team)
-                infos += [(score.team_a, score.team_b, event)]
-       
-            result += display_graph(infos) 
+            result += display_graph(match_parts) 
         except Exception as e:  
             result += f"Error: {e}"
             print(f"!!!!!!!!!!!!\nError: {e}\n!!!!!!!!!!!!")
@@ -597,7 +588,7 @@ def higlights_sequence(csv_folder,
               video_folder, 
               output_folder, 
               output_file, 
-              #filter, 
+              filter, 
               duration_before = 7, 
               duration_after = 1,
               input_video_filename = lambda filename: filename,
@@ -611,7 +602,8 @@ def higlights_sequence(csv_folder,
         filename=os.path.basename(file).replace(".csv", "")
                    
         match = MatchPart.build_from_csv(f"{csv_folder}/{filename}.csv")
-        highlights = match.events
+        highlights = [event for event in match.events if filter(event)]
+        
         # highlights = [event for event in match.events if filter(event)]
         # # Keep last '<' when several times
         # events_keeps=[]
@@ -696,33 +688,16 @@ def sequence(match):
     csv_folder=f"{match.root_folder}/sequence"
     files = EventRecord.files_sorted(f"{csv_folder}/*.csv")
         
-    print(files)
-    for file in files:
-        content = EventRecord.read_content_of_file(file)
-        print(f"File {file}\n{content}")
-        
-        events = [EventRecord.from_csv(event) for event in content]
-        # print(events)
-        events_keeps=[]
-        for (index, event) in enumerate(events):
-            #print(f"{index}/{len(events)} {event.team} - {events[index].team} != {events[index+1].team}")
-            if index+1 >= len(events) or event.team == ">" or events[index].team != events[index+1].team:
-             #   print("Keep")
-                events_keeps.append(event)
-        print([e.to_csv() for e in events_keeps])
-        
-    # create_highights_clip()
-    build_filename = lambda filename: f"{filename}.output"
+    build_filename = lambda filename: f"{filename}"
     
     higlights_sequence(f"{match.root_folder}/sequence",
                     f"{match.root_folder}/video",
                     f"{match.root_folder}/output",
                     "sequence",
-                    #lambda e: e.team == ">",
+                    lambda event: True, 
                     0, 
                     0,
                     build_filename)
-    # results = [EventRecord._validate_csv_file(file) for file in files]
 
 def extract_clips(video_file, clip_times, time_in_final_video = 0):
     clip_list = []
@@ -743,56 +718,7 @@ if __name__ == "__main__":
         match.video_folder = f"{match.root_folder}/video"
         match.output_folder = f"{match.root_folder}/test"
         
-        # filter = lambda event: int(event.points) > 1
-        # filter = lambda event: True
-        
-        # clip_list = extract_clips(f"{match.video_folder}/MatchTest_complet.mp4", [
-        #     (1,4),
-        #     (4,8),
-        #     (1,4),
-        #     ])
-        
-        # output_folder = match.output_folder
-        # output_file = "MatchTest_extract"
-        
-        # # total_time=0
-        # # final_clip_list = []
-        # # for clip in clip_list:
-        # #     print(total_time)
-        # #     final_clip_list.append(clip.set_start(total_time))
-        # #     total_time += clip.duration
-        # #     print(f"{clip.duration} {clip.s}" )
-        # #     final_clip_list.append(clip)
-        # # clip_list = final_clip_list
-        
-        # padding=1
-        # fade_color=(30,30,30)
-        # clip_list = [fx.all.fadeout(clip, padding, final_color=fade_color) for clip in clip_list]
-        # clip_list = [fx.all.fadein(clip, padding, initial_color=fade_color) for clip in clip_list]
-        
-        
-        # clip = mpy.CompositeVideoClip(clip_list)
-        
-        
-        
-        # clip.write_videofile(f"{output_folder}/{output_file}_x.mp4", threads=8, preset="veryfast")
-        # higlights(match.csv_folder, match.video_folder, match.output_folder, f"{match.root_name}_highlight", filter, 
-        #           duration_before=2, 
-        #           duration_after=1,
-        #           input_video_filename=lambda filename: f"{filename}")
-       
-    #    higlights_demo()
-        match.highlight_points()
-       
-        #compress("Match/mi-temps1/VID_20240211_113451.mp4.compress.mp4", output_file=f"Match/compress.mp4", preset="medium")
-        # Original 640,6Mo
-        # Compress with CompositeVideoClip veryfast: 518.1mo
-        # Compress with CompositeVideoClip medium: 472.1mo
-        # Compress with direct write_videofile fps=None: 518.1mo
-        # Compress with direct write_videofile fps=24: 457.8mo
-        # Compress with direct write_videofile fps=24, medium: 473.6.8mo
-        #audio_analyze("Match_2024_02_04/output/VID_20240204_110324.output.mp4")
-    
+   
     elif args[1] == "validate":
         (output, valid) = EventRecord.validate(match.csv_folder)
         print(output)

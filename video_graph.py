@@ -1,14 +1,13 @@
-def display_graph(infos):
-    keep_when_score = []
-    last_a = None
-    last_b = None
-    for info in infos:
-        if info[1] != last_a or info[2] != last_b:
-            keep_when_score.append(info)
-        last_a=info[1]
-        last_b=info[2]
-            
-    infos = keep_when_score
+
+from video_match import EventRecord, Score
+
+def display_graph(match_parts):
+    score = Score()
+    infos = [(score.team_a, score.team_b, EventRecord(0,"",0,1))]
+    
+    for event in [event for event in match_parts.events if event.points > 0]:
+        score = score.add(event.points, event.team)
+        infos += [(score.team_a, score.team_b, event)]
     
     scores = [b-a for (a,b,_) in infos]
     
