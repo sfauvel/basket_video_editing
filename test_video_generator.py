@@ -522,8 +522,8 @@ class TestVideoGenerator(unittest.TestCase):
         ])
         display = match_events.display("TEAM A", "TEAM B") 
         assert display == "\n".join([
-            "0:00:03   TEAM A   2 - 0   TEAM B    (2)   2 qt",
-            "0:00:05   TEAM A   2 - 1   TEAM B    (1)   2 qt",
+            "0:00:03   +2  TEAM A   2 - 0   TEAM B      (2)   2 qt",
+            "0:00:05       TEAM A   2 - 1   TEAM B  +1  (1)   2 qt",
         ]), "\n"+display
         
     def test_score_by_quarter(self):

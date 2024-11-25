@@ -141,7 +141,9 @@ class MatchPart:
         for event in [event for event in self.events if event.points > 0]:
             score = score.add(event.points, event.team)
             
-            line = f"{seconds_to_time(event.time_in_seconds)}".ljust(10) + f"{format_score(score)}".ljust(max_text_length+3) + f"({score.team_a-score.team_b})".ljust(6) + f"{event.quarter_time} qt"
+            point_a = f"+{event.points}" if event.team == "A" else ""
+            point_b = f"+{event.points}" if event.team == "B" else ""
+            line = f"{seconds_to_time(event.time_in_seconds)}".ljust(10) + f"{point_a}".ljust(4) + f"{format_score(score)}".ljust(max_text_length+1) + f"{point_b}".ljust(4) + f"({score.team_a-score.team_b})".ljust(6) + f"{event.quarter_time} qt"
       
             lines.append(line)
             

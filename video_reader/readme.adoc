@@ -13,6 +13,20 @@ sudo apt install vlc
 https://www.makeuseof.com/python-video-media-player-how-to-build/
 
 
+== Launch
+
+ When we run the `video_reader.py`, we disable repeating key press by running the following command:
+----
+os.system('xset r off')
+----
+
+That deactivates the repeating key press for the machine. 
+To ractivate it, run the following command:
+----
+xset r on
+----
+
+
 == Development
 
 To run tests:
@@ -20,3 +34,7 @@ To run tests:
 ----
 python3 -m unittest
 ----
+
+Codec : hevc = h265
+voir codec sur la methode write_videofile dans la class VideoClip de la lib vlc
+see https://stackoverflow.com/questions/68372182/how-can-i-use-libx265-h-265-in-the-ffmpeg-python-package
