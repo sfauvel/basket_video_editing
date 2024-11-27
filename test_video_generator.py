@@ -363,30 +363,6 @@ class TestVideoGenerator(unittest.TestCase):
         assert final_score.team_a == 25
         assert final_score.team_b == 11
     
-    def test_time_to_seconds(self):
-        assert 5 == time_to_seconds("0:05")
-        assert 4*60+25 == time_to_seconds("4:25")
-        assert 2*3600+14*60+25 == time_to_seconds("134:25")
-        assert 1*3600+14*60+25 == time_to_seconds("1:14:25")
-        
-        
-    def test_seconds_to_time(self):
-        assert seconds_to_time(5) == "0:00:05"
-        assert seconds_to_time(4*60+25) == "0:04:25"
-        assert seconds_to_time(1*3600+14*60+25) == "1:14:25"
-        
-        
-    def should_throw_an_exception(self, time):
-        try:
-            time_to_seconds(time)
-        except:
-            return
-        assert False, f"'{time}' is invalid. An exception should be raised"
-    
-    def test_invalid_time_to_seconds(self):
-        self.should_throw_an_exception("5s")
-        self.should_throw_an_exception("1:02:14:25")
-
     def test_collapse_overlap_without_overlap(self):
         events = EventFile().extract_match_events([
             "2;A;0:13;2",

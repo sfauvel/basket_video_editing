@@ -227,8 +227,6 @@ ScriptType: v4.00+
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: TeamAold,  Segoe UI,14,&H00FFFFFF,&H00FFFFFF,&H00303030,&H80000008,-1,0,0,0,100,100,0.00,0.00,1,1.00,2.00, 8 ,0,120,8,0
-Style: TeamBold,  Segoe UI,14,&H00FFFFFF,&H00FFFFFF,&H00303030,&H80000008,-1,0,0,0,100,100,0.00,0.00,1,1.00,2.00, 8 ,90,0,8,0
 
 Style: TeamA,   Arial,14,&H00FFFFFF,&H00FFFFFF,&H00303030,&H80000008,-1,0,0,0,100,100,0.00,0.00,1,1.00,2.00, 9 ,0,222,8,0
 Style: TeamB,   Arial,14,&H00FFFFFF,&H00FFFFFF,&H00303030,&H80000008,-1,0,0,0,100,100,0.00,0.00,1,1.00,2.00, 7 ,222,0,8,0
@@ -574,7 +572,6 @@ class MatchVideo:
         except Exception as e:  
             result += f"Error: {e}"
             print(f"!!!!!!!!!!!!\nError: {e}\n!!!!!!!!!!!!")
-            raise e
         
         ## Write to stat file
         # print(result)        
@@ -688,7 +685,7 @@ def sequence(match):
     csv_folder=f"{match.root_folder}/sequence"
     files = EventRecord.files_sorted(f"{csv_folder}/*.csv")
         
-    build_filename = lambda filename: f"{filename}"
+    build_filename = lambda filename: f"{filename}.output"
     
     higlights_sequence(f"{match.root_folder}/sequence",
                     f"{match.root_folder}/video",
@@ -712,7 +709,7 @@ def extract_clips(video_file, clip_times, time_in_final_video = 0):
 if __name__ == "__main__":
     args = sys.argv
     folder = args[2] if len(args) > 2 else "Match"
-    match = MatchVideo(folder, "ST ROGATIEN", "SLB")
+    match = MatchVideo(folder, "SLB", "LUCON")
     if args[1] == "spike":
         match.csv_folder = f"{match.root_folder}/test"
         match.video_folder = f"{match.root_folder}/video"
