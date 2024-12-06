@@ -85,7 +85,8 @@ class MediaPlayerApp(tk.Tk):
         
         def length_changed(event):
             total_duration = event.u.new_length
-            self.add_start_and_end_events(total_duration)
+            if len(self.model.events) == 0:
+                self.add_start_and_end_events(total_duration)
             
         self.media_player.event_manager().event_attach(vlc.EventType.MediaPlayerLengthChanged, length_changed)
         
@@ -145,6 +146,7 @@ class MediaPlayerApp(tk.Tk):
             self.quarter_listbox = Combobox(self.files_frame, height=20, width=2, values=["1","2","3","4"], state="readonly", font="Verdana 16")
             self.quarter_listbox.pack(pady=5)
             self.quarter_listbox.set("1")
+            self.quarter_listbox.bind("<<ComboboxSelected>>", self.select_quarter_event) 
             
         def mk_point_button(team, points, shortcut):
             command = lambda: self.point(points, team.name)
@@ -316,6 +318,13 @@ class MediaPlayerApp(tk.Tk):
             self.refresh_events()
             self.points_listbox.see(len(self.model.events)+1)
         
+           
+    def select_quarter_event(self, event):
+        quarter = self.quarter_listbox.get()
+        for event in self.model.events:
+            event.quarter = quarter
+        self.refresh_events()
+        
     def refresh_events(self):
         self.points_listbox.delete(0, tk.END)
         for event in self.model.events:
@@ -382,11 +391,12 @@ class MediaPlayerApp(tk.Tk):
         self.time_label.config(text=time_label)
             
     def launch_video(self, video_path):
-        if video_path:
+        if video_path:            
             self.model.events = []
             self.refresh_events()
             
             self.current_file = video_path
+            self.title(video_path)
             self.refresh_time()
             self.play_video()
             
@@ -397,6 +407,7 @@ class MediaPlayerApp(tk.Tk):
             #self.media_player.set_hwnd(self.media_canvas.winfo_id())
             self.media_player.set_xwindow(self.media_canvas.winfo_id())
             self.set_rate(1)
+           
             self.media_player.play()
             self.playing_video = True
             
@@ -439,6 +450,10 @@ class MediaPlayerApp(tk.Tk):
         # Otherwise a "get_buffer() failed" occurs when the scrollbar is set
         # and the video freezzes a few seconds.
         if self.playing_video:
+            if not self.media_player.is_playing():
+                self.playing_video = False
+                self.play_video()
+            self.media_player.is_playing
             total_duration = self.media_player.get_length()
             position = int((float(value) / 100) * total_duration)
             print(f"Setting position to {position}")
