@@ -48,7 +48,9 @@ python3 video_generator.py [COMMAND] [MATCH FOLDER]
 
 .Repérage
 - Aller dans le répertoire `Match_[ANNEE]_[MOIS]_[JOUR]`
-- Construire les fichiers `CSV` en exécutant la commande `python3 ../video_reader/reader.py video/[NOM VIDEO].mp4` sur chaque fichier video
+
+
+- Construire les fichiers `CSV` en exécutant la commande `python3 ../video_reader/reader.py -s $(python3 ../video_generator.py final_score . | tail -1) -v video/[NOM VIDEO].mp4` sur chaque fichier video
 - Modifier le nom des équipes dans le fichier `video_generator.py` au début du `main`.
 - Vérifier le score: `python3 ../video_generator.py score .`
 

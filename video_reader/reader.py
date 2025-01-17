@@ -66,7 +66,8 @@ TEAM.START=TEAM(">", ButtonType.STANDARD)
 TEAM.END=TEAM("<", ButtonType.STANDARD)
 
 class MediaPlayerApp(tk.Tk):
-    def __init__(self):
+    def __init__(self, score="0-0"):
+        self.score=score
         super().__init__()
         self.title("Media Player")
         self.geometry("800x800")
@@ -168,8 +169,14 @@ class MediaPlayerApp(tk.Tk):
         
         mk_files_component(self.select_file_frame)
         
-        self.time_label = mk_label(self, self.build_time_label())
-        self.time_label.pack(pady=5)
+        
+        self.time_and_score = tk.Frame(self, bg=BACKGROUND)
+        self.time_and_score.pack(pady=5)
+        self.time_label = mk_label(self.time_and_score, self.build_time_label())
+        self.time_label.pack(side=tk.LEFT, pady=5)
+        
+        self.score_label = mk_label(self.time_and_score, self.build_score(self.score))
+        self.score_label.pack(side=tk.LEFT, pady=5, padx=20)
         
         self.control_buttons_frame = tk.Frame(self, bg=BACKGROUND)
         self.control_buttons_frame.pack(pady=5)
@@ -299,6 +306,9 @@ class MediaPlayerApp(tk.Tk):
 
         # self.points_listbox.bind("<<ListboxSelect>>", callback_select_event) # Ne pas binder sur Select sinon le <espace> déclenche l'évenement
         self.points_listbox.bind("<ButtonRelease-1>", callback_select_event)
+
+    def build_score(self, score):
+        return f"Score: {score[0]} - {score[1]}"
         
     def set_rate(self, rate):
         print(f"Setting rate to {rate}")
@@ -327,10 +337,17 @@ class MediaPlayerApp(tk.Tk):
         
     def refresh_events(self):
         self.points_listbox.delete(0, tk.END)
+        score = self.score
         for event in self.model.events:
             time_str = build_time_str(event.time)
             quarter = f", {event.quarter}/4" if event.quarter else ""
             self.points_listbox.insert(tk.END, f"{time_str}: Team {event.team_name}: {event.points} pts{quarter}")
+            if event.team_name == "A":
+                score = (score[0] + event.points, score[1])
+            else:
+                score = (score[0], score[1] + event.points)
+                
+        self.score_label.config(text=self.build_score(score))
         
     def select_file(self):
         file_path = filedialog.askopenfilename(
@@ -488,11 +505,21 @@ class VideoProgressBar(tk.Scale):
 
 if __name__ == "__main__":
     
-    # Get first parameter from command line
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-v", "--video", default=None,
+        help="Chemin vers le fichier video")
+    ap.add_argument("-s", "--score", default="0-0",
+        help="Score initial: -s 15-6")
+    args = vars(ap.parse_args())
     
-    video_path = sys.argv[1] if len(sys.argv) > 1 else None
-    
-    app = MediaPlayerApp()
+    # # Get first parameter from command line    
+    # video_path = sys.argv[1] if len(sys.argv) > 1 else None
+    video_path=args["video"]
+    splitted_score=args["score"].split("-")
+    initial_score=(int(splitted_score[0]), int(splitted_score[1]))
+
+    app = MediaPlayerApp(initial_score)
     app.update_video_progress()
     app.launch_video(video_path)
     app.mainloop()

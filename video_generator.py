@@ -545,6 +545,11 @@ class MatchVideo:
             if record.team == "B":
                 self.team_b[record.points] += 1
     
+    def final_score(self):
+        match_parts = MatchPart.concat_match_parts([MatchPart.build_from_csv(f"{file}") for file in files_sorted(f'{self.csv_folder}/*.csv')])        
+        score = match_parts.final_score()
+        return f"{score.team_a}-{score.team_b}"
+    
     def display_score(self):
         match_parts = MatchPart.concat_match_parts([MatchPart.build_from_csv(f"{file}") for file in files_sorted(f'{self.csv_folder}/*.csv')])        
         game_sheet=match_parts.game_sheet()
@@ -709,7 +714,7 @@ def extract_clips(video_file, clip_times, time_in_final_video = 0):
 if __name__ == "__main__":
     args = sys.argv
     folder = args[2] if len(args) > 2 else "Match"
-    match = MatchVideo(folder, "SLB", "LUCON")
+    match = MatchVideo(folder, "LONGUE", "SLB")
     if args[1] == "spike":
         match.csv_folder = f"{match.root_folder}/test"
         match.video_folder = f"{match.root_folder}/video"
@@ -722,6 +727,9 @@ if __name__ == "__main__":
         print("Ok" if valid else "ERRORS")
     elif args[1] == "score":
         print(match.display_score())
+    elif args[1] == "final_score":
+        print(match.final_score())
+        
     elif args[1] == "extract":
         match.extract("big_fautes")
         
@@ -751,7 +759,7 @@ if __name__ == "__main__":
         match.create_single_video()
         
     elif args[1] == "full":
-        match.generate()
+        #match.generate()
         match.highlight()
         match.create_single_video()
         
