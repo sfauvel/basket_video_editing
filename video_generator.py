@@ -390,13 +390,27 @@ def higlights(csv_folder,
 
 class MatchVideo:
     def __init__(self, root_folder, team_a="LOCAUX", team_b="VISITEUR"):
-        self.root_folder = root_folder
-        self.root_name = self.root_folder.split("/")[-1]
+        
+        self.root_folder = os.path.normpath(root_folder)
+        self.root_name = os.path.basename(os.path.abspath(root_folder))
         self.csv_folder = f"{self.root_folder}/csv"
         self.video_folder = f"{self.root_folder}/video"
         self.output_folder = f"{self.root_folder}/output"
+        self.ass_folder = f"{self.root_folder}/ass"
         self.team_a = team_a
         self.team_b = team_b
+        
+    def __str__(self):
+        return f"""
+        root_folder: {self.root_folder}
+        root_name: {self.root_name}
+        csv_folder: {self.csv_folder}
+        video_folder: {self.video_folder}
+        output_folder: {self.output_folder}
+        ass_folder: {self.ass_folder}
+        team_a: {self.team_a}
+        team_b: {self.team_b}
+        """
         
     def format_score(self, score):
         return f"{self.team_a} {str(score.team_a).rjust(3)} - {str(score.team_b).ljust(3)} {self.team_b} "
@@ -420,7 +434,7 @@ class MatchVideo:
         generate_from_dir(
             csv_folder=self.csv_folder, 
             video_folder=self.video_folder, 
-            output_folder=self.output_folder,
+            output_folder=self.ass_folder,
             team_a=self.team_a, 
             team_b=self.team_b,
         )
@@ -597,7 +611,7 @@ def higlights_sequence(csv_folder,
               csv_filter = "*"):
     clips = []
     
-    total_time = 0
+    parts_by_filename = []
     for file in files_sorted(f'{csv_folder}/{csv_filter}.csv'):
         print(file)
         
@@ -606,33 +620,24 @@ def higlights_sequence(csv_folder,
         match = MatchPart.build_from_csv(f"{csv_folder}/{filename}.csv")
         highlights = [event for event in match.events if filter(event)]
         
-        # highlights = [event for event in match.events if filter(event)]
-        # # Keep last '<' when several times
-        # events_keeps=[]
-        # for (index, event) in enumerate(highlights):
-        #     #print(f"{index}/{len(events)} {event.team} - {events[index].team} != {events[index+1].team}")
-        #     if index+1 >= len(events) or event.team == ">" or events[index].team != events[index+1].team:
-        #      #   print("Keep")
-        #         events_keeps.append(event)
-        # highlights=events_keeps
-        
         index = 0        
         video_parts = []
-        assert highlights[0].team == ">" and highlights[-1].team == "<"
-        
+        sequences_are_closed = True
         for index in range(0, len(highlights)):
             if highlights[index].team == ">":
+                sequences_are_closed = False
                 video_parts.append((highlights[index].time_in_seconds, None))
             elif highlights[index].team == "<":
-                print(video_parts)
-                print(video_parts[-1])
-                print(video_parts[-1][0])
+                sequences_are_closed = True
                 video_parts[-1] = (video_parts[-1][0], highlights[index].time_in_seconds)
-            
-        print(f"output_folder: {output_folder}")
-        total_time = add_clip_parts(video_parts, f"{output_folder}/{input_video_filename(filename)}.mp4", clips, total_time)
-        #total_time = create_highights_clip(highlights, f"{video_folder}/{input_video_filename(filename)}.mp4", clips, total_time, duration_before, duration_after)
         
+        assert sequences_are_closed
+        parts_by_filename.append((filename, video_parts))
+    
+    total_time = 0
+    for (filename, video_parts) in parts_by_filename:        
+        total_time = add_clip_parts(video_parts, f"{output_folder}/{input_video_filename(filename)}.mp4", clips, total_time)
+            
     clip = mpy.CompositeVideoClip(clips)   
     clip.write_videofile(f"{output_folder}/{output_file}.mp4", threads=8, preset="veryfast")
 
@@ -714,12 +719,13 @@ def extract_clips(video_file, clip_times, time_in_final_video = 0):
 if __name__ == "__main__":
     args = sys.argv
     folder = args[2] if len(args) > 2 else "Match"
-    match = MatchVideo(folder, "LONGUE", "SLB")
+    match = MatchVideo(folder, "SLB", "HERMINE")
     if args[1] == "spike":
         match.csv_folder = f"{match.root_folder}/test"
         match.video_folder = f"{match.root_folder}/video"
         match.output_folder = f"{match.root_folder}/test"
-        
+   
+        print(f"Match {folder}:\n{match}")
    
     elif args[1] == "validate":
         (output, valid) = EventRecord.validate(match.csv_folder)
@@ -762,6 +768,7 @@ if __name__ == "__main__":
         #match.generate()
         match.highlight()
         match.create_single_video()
+        sequence(match)
         
     elif args[1] == "sequence":
         sequence(match)

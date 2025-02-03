@@ -158,13 +158,6 @@ class MatchPart:
             scores[quarter] = scores[quarter].add(event.points, event.team)
                 
         return scores
-    
-    def final_score(self):
-        score = Score(0,0)
-        for event in [event for event in self.events if event.points > 0]:
-            score = score.add(event.points, event.team)
-                
-        return score
 
 class EventFile:
     
