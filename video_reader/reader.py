@@ -3,7 +3,7 @@ import sys
 import time
 import tkinter as tk
 import vlc
-from tkinter import filedialog
+from tkinter import filedialog, Listbox
 from tkinter.ttk import Combobox
 from datetime import timedelta
 
@@ -27,8 +27,10 @@ class EventData:
         self.events = []
 
     def add_event(self, time, points, team_name, quarter=None):
-        self.events.append(Event(time, points, team_name, quarter))
+        event = Event(time, points, team_name, quarter)
+        self.events.append(event)
         self.events = sorted(self.events, key=lambda event: event.time)
+        return event
     
     def save(self, stream):
         cvs_format = lambda event: f"{event.points};{event.team_name};{build_time_str(event.time)};{event.quarter}"
@@ -81,12 +83,14 @@ class MediaPlayerApp(tk.Tk):
         self.current_file = None
         self.playing_video = False
         self.video_paused = False
+        self.needs_to_start_and_end_events = False
         self.rate=1
         self.create_widgets()
         
         def length_changed(event):
             total_duration = event.u.new_length
-            if len(self.model.events) == 0:
+            if len(self.model.events) == 0 or self.needs_to_start_and_end_events:
+                self.needs_to_start_and_end_events = False
                 self.add_start_and_end_events(total_duration)
             
         self.media_player.event_manager().event_attach(vlc.EventType.MediaPlayerLengthChanged, length_changed)
@@ -126,7 +130,8 @@ class MediaPlayerApp(tk.Tk):
             self.scrollbar = tk.Scrollbar(self)
             self.scrollbar.pack(side=tk.RIGHT, fill=tk.BOTH)       
             # Create a listbox to display the points
-            self.points_listbox = tk.Listbox(self, height=10, width=30)
+            self.points_listbox = tk.Listbox(self, height=10, width=35, 
+                font=("Courier", 12),)
             self.points_listbox.pack(side=tk.RIGHT, pady=5, fill=tk.BOTH)
             self.points_listbox.config(yscrollcommand = self.scrollbar.set) 
             self.scrollbar.config(command = self.points_listbox.yview)
@@ -251,6 +256,22 @@ class MediaPlayerApp(tk.Tk):
                 index = selection[0]
                 self.model.events.pop(index)
                 self.refresh_events()
+                
+        def select_event_index(event, next_index):
+            if isinstance(event.widget, Listbox):
+                selection = event.widget.curselection()
+                if selection:
+                    index = selection[0]
+                    max_value = event.widget.size()-1
+                    min_value = 0
+                    self.select_event_in_list(event.widget, max(min(next_index(index), max_value),min_value))
+                
+                
+        def select_next_event(event):
+            select_event_index(event, lambda index: index+1)
+        
+        def select_previous_event(event):
+            select_event_index(event, lambda index: index-1)
             
         self.bind("<space>", lambda e: self.pause_video())
         #self.bind("<Left>", lambda e: self.relative_move(-100))
@@ -279,27 +300,14 @@ class MediaPlayerApp(tk.Tk):
         self.bind("(", lambda e: self.set_rate(5))
         self.bind("5", lambda e: self.set_rate(5))
         self.bind("<Delete>", delete_event)
-
+        self.bind("<n>", select_next_event)
+        self.bind("<p>", select_previous_event)
 
         def callback_select_event(event):
-            print("callback_select_event")
-            print(f"callback_select_event {event}")
             selection = event.widget.curselection()
             
             if selection:
-                index = selection[0]
-                data = event.widget.get(index)
-                print(f"{index}: {data}")
-                
-                # Set video position to this event
-                time_position = self.model.events[index].time
-                # time_position -= 3000
-                total_duration = max(self.media_player.get_length(), 0)
-                progress_percentage = 0 if (total_duration == 0) else (time_position / total_duration) * 100
-                #self.progress_bar.set(progress_percentage)
-                # We need to set media timeand not the progress bar that is less precise
-                self.media_player.set_time(time_position)
-                #self.points_listbox.selection_clear(0, tk.END)
+                self.select_event_in_list(event.widget, selection[0])
             else:
                 print(f"deselect")
                 #label.configure(text="")
@@ -307,6 +315,24 @@ class MediaPlayerApp(tk.Tk):
         # self.points_listbox.bind("<<ListboxSelect>>", callback_select_event) # Ne pas binder sur Select sinon le <espace> déclenche l'évenement
         self.points_listbox.bind("<ButtonRelease-1>", callback_select_event)
 
+    def select_event_in_list(self, widget, index):
+        self.points_listbox.selection_clear(0, tk.END)
+        self.points_listbox.selection_set(index)
+        self.points_listbox.activate(index)
+        self.points_listbox.see(index)
+        data = widget.get(index)
+        print(f"{index}: {data}")
+        
+        # Set video position to this event
+        time_position = self.model.events[index].time
+        # time_position -= 3000
+        total_duration = max(self.media_player.get_length(), 0)
+        progress_percentage = 0 if (total_duration == 0) else (time_position / total_duration) * 100
+        #self.progress_bar.set(progress_percentage)
+        # We need to set media timeand not the progress bar that is less precise
+        self.media_player.set_time(time_position)
+        #self.points_listbox.selection_clear(0, tk.END)
+        
     def build_score(self, score):
         return f"Score: {score[0]} - {score[1]}"
         
@@ -324,9 +350,9 @@ class MediaPlayerApp(tk.Tk):
             print(f"{points} point for team {team_name}: {current_time_str}")  
             
             print(f"point time: {current_time}")
-            self.model.add_event(current_time, points, team_name, self.quarter_listbox.get())
+            event = self.model.add_event(current_time, points, team_name, self.quarter_listbox.get())
             self.refresh_events()
-            self.points_listbox.see(len(self.model.events)+1)
+            self.select_events_in_listbox(event)
         
            
     def select_quarter_event(self, event):
@@ -334,19 +360,39 @@ class MediaPlayerApp(tk.Tk):
         for event in self.model.events:
             event.quarter = quarter
         self.refresh_events()
+    
+    def select_events_in_listbox(self, event):
+        event_label = self.build_event_label(event)
+        for index, label in enumerate(self.points_listbox.get(0, tk.END)):
+            if label.startswith(event_label):
+                self.points_listbox.selection_clear(0, tk.END)
+                self.points_listbox.selection_set(index)
+                self.points_listbox.activate(index)
+                self.points_listbox.see(index)
+                return
         
+        
+    def build_event_label(self, event):
+        time_str = build_time_str(event.time)
+        return f"{time_str}:Team {event.team_name}: {event.points}pts"
+           
     def refresh_events(self):
+        index = self.points_listbox.curselection()
         self.points_listbox.delete(0, tk.END)
         score = self.score
         for event in self.model.events:
-            time_str = build_time_str(event.time)
             quarter = f", {event.quarter}/4" if event.quarter else ""
-            self.points_listbox.insert(tk.END, f"{time_str}: Team {event.team_name}: {event.points} pts{quarter}")
             if event.team_name == "A":
                 score = (score[0] + event.points, score[1])
             else:
                 score = (score[0], score[1] + event.points)
-                
+            self.points_listbox.insert(tk.END, f"{self.build_event_label(event)} => {score[0]}-{score[1]}{quarter}")
+        
+        if index:
+            self.points_listbox.selection_set(index)
+            self.points_listbox.activate(index)
+            self.points_listbox.see(index)
+            
         self.score_label.config(text=self.build_score(score))
         
     def select_file(self):
@@ -511,15 +557,27 @@ if __name__ == "__main__":
         help="Chemin vers le fichier video")
     ap.add_argument("-s", "--score", default="0-0",
         help="Score initial: -s 15-6")
+    ap.add_argument("-c", "--csv", default=None,
+        help="Load csv from folder")
     args = vars(ap.parse_args())
     
     # # Get first parameter from command line    
     # video_path = sys.argv[1] if len(sys.argv) > 1 else None
     video_path=args["video"]
+    csv_path=args["csv"]
+    
     splitted_score=args["score"].split("-")
     initial_score=(int(splitted_score[0]), int(splitted_score[1]))
 
     app = MediaPlayerApp(initial_score)
     app.update_video_progress()
     app.launch_video(video_path)
+    if csv_path and video_path:
+        filename = os.path.basename(video_path)
+        csv_filename = csv_path + "/" + os.path.splitext(filename)[0] + ".csv"
+        print(csv_filename)
+        app.load_csv_file(csv_filename)
+        app.needs_to_start_and_end_events = True
+        print(app.media_player.get_length())
+        
     app.mainloop()
