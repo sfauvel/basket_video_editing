@@ -18,7 +18,19 @@ pip install keyboard
 * https://www.stackbuilders.com/blog/python-video-generation/
 * https://zulko.github.io/moviepy/getting_started/compositing.html
 
+== Test
+
+On passe par un script qui exécute les tests dans un contenaire Docker.
+
+----
+. ./script/run_pytest.sh video_editing/
+----
+
 == Execution
+
+----
+python3 video_editing/video_generator.py score [MATCH FOLDER]
+----
 
 .Format du fichier CSV
 ----

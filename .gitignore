@@ -3,8 +3,8 @@
 /.vscode/
 
 # Temporary folder
-/tmp/
-/work/
+**/tmp/
+**/work/
 
 # Data Folder
 /Matchs/
