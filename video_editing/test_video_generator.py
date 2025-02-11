@@ -1,5 +1,3 @@
-
-
 import os
 import shutil
 import unittest
@@ -9,8 +7,14 @@ from video_match import *
 from video_utils import *
 from video_generator import collapse_overlaps
 
+class Folder:
+    def recreate(folder):
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+        os.makedirs(folder, exist_ok=True)
 
 class TestEventRecord(unittest.TestCase):
+    
     def test_event_record_to_csv(self):
         assert "3;A;0:00:12;2" == EventRecord(3, "A", 12, 2).to_csv()
         assert "3;A;0:00:02;2" == EventRecord(3, "A", 2, 2).to_csv(), EventRecord(3, "A", 2, 2).to_csv()
@@ -49,8 +53,7 @@ class TestEventRecord(unittest.TestCase):
         assert 4*60+25 == record.time_in_seconds
         
     def test_event_record_validation_ok(self):
-        shutil.rmtree("tmp")
-        os.makedirs("tmp", exist_ok=True)
+        Folder.recreate("tmp")
         
         with (open("tmp/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([
@@ -64,8 +67,7 @@ class TestEventRecord(unittest.TestCase):
         assert "tmp1.csv: Ok" in result, result
         
     def test_event_record_invalid(self):
-        shutil.rmtree("tmp")
-        os.makedirs("tmp", exist_ok=True)
+        Folder.recreate("tmp")
         
         with (open("tmp/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([
@@ -81,8 +83,7 @@ class TestEventRecord(unittest.TestCase):
         
         
     def test_event_record_show_all_invalid_lines(self):
-        shutil.rmtree("tmp")
-        os.makedirs("tmp", exist_ok=True)
+        Folder.recreate("tmp")
         
         with (open("tmp/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([
@@ -108,8 +109,7 @@ class TestEventRecord(unittest.TestCase):
         assert "- Line 2: 2;B;12;4" in result, result
         
     def test_event_record_when_time_is_not_well_ordered(self):
-        shutil.rmtree("tmp")
-        os.makedirs("tmp", exist_ok=True)
+        Folder.recreate("tmp")
         
         with (open("tmp/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([
@@ -127,8 +127,7 @@ class TestEventRecord(unittest.TestCase):
 class TestVideoGenerator(unittest.TestCase):
 
     def test_build_match_part_from_csv(self):
-        shutil.rmtree("tmp")
-        os.makedirs("tmp", exist_ok=True)
+        Folder.recreate("tmp")
         events = [EventRecord(2,"A",5),EventRecord(1,"B",6),EventRecord(3,"A",7),EventRecord(0,"X",9)]
         with (open("tmp/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([e.to_csv() for e in events]))
@@ -149,8 +148,7 @@ class TestVideoGenerator(unittest.TestCase):
         
     
     def test_build_match_part_from_csv_with_initial_score(self):
-        shutil.rmtree("tmp")
-        os.makedirs("tmp", exist_ok=True)
+        Folder.recreate("tmp")
         events = [EventRecord(2,"A",5),EventRecord(1,"B",6),EventRecord(3,"A",7),EventRecord(0,"X",9)]
         with (open("tmp/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([e.to_csv() for e in events]))

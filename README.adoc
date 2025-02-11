@@ -1,6 +1,7 @@
-= Video generator
+= Edition de vidéo de basket
 
-Le but de ce projet est de générer une vidéo avec du texte.
+Le but de ce projet est de produire des outils pour manipuler des vidéos de basket.
+
 
 Prérequis:
 ----

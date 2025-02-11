@@ -225,14 +225,10 @@ class MediaPlayerApp(tk.Tk):
             self.pause_video()
             read_backwards()
             
-        
-        # TODO this line change the value for the os !!!!
-        os.system('xset r off')
         self.auto_repeat_rewind_flag = False
         def auto_repeat_step_by_step(value):
-            if self.auto_repeat_rewind_flag:
-                self.relative_move(value)
-                self.after(200, lambda: auto_repeat_step_by_step(value))
+            self.relative_move(value)
+            time.sleep(0.1)
                 
         def rewind_pressed(event):
             step_by_step_pressed(-50)
@@ -477,7 +473,7 @@ class MediaPlayerApp(tk.Tk):
     def relative_move(self, duration):
         if self.playing_video:
             print(f"relative_move Current time: {self.media_player.get_time()}")
-            current_time = self.media_player.get_time() + duration
+            current_time = max(0, self.media_player.get_time() + duration)
             self.media_player.set_time(current_time)
 
     def fast_forward(self):

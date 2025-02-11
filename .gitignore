@@ -1,0 +1,10 @@
+# Technical folder
+**/__pycache__/
+/.vscode/
+
+# Temporary folder
+/tmp/
+/work/
+
+# Data Folder
+/Matchs/
