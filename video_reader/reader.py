@@ -544,9 +544,7 @@ class VideoProgressBar(tk.Scale):
             value = (event.x / self.winfo_width()) * 100
             self.set(value)
 
-
-if __name__ == "__main__":
-    
+def parse_args():
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("-v", "--video", default=None,
@@ -555,7 +553,21 @@ if __name__ == "__main__":
         help="Score initial: -s 15-6")
     ap.add_argument("-c", "--csv", default=None,
         help="Load csv from folder")
-    args = vars(ap.parse_args())
+    args = vars(ap.parse_args())  
+
+if __name__ == "__main__":
+    
+    # import argparse
+    # ap = argparse.ArgumentParser()
+    # ap.add_argument("-v", "--video", default=None,
+    #     help="Chemin vers le fichier video")
+    # ap.add_argument("-s", "--score", default="0-0",
+    #     help="Score initial: -s 15-6")
+    # ap.add_argument("-c", "--csv", default=None,
+    #     help="Load csv from folder")
+    # args = vars(ap.parse_args())
+    
+    args = parse_args()
     
     # # Get first parameter from command line    
     # video_path = sys.argv[1] if len(sys.argv) > 1 else None

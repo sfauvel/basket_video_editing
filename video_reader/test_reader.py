@@ -17,14 +17,12 @@ class TestEventData(unittest.TestCase):
         
     def test_save(self):
         data = EventData()
-        data.add_event(123, 2, "A")
-        data.add_event(234, 1, "A")
+        data.add_event(6000, 2, "A")
+        data.add_event(8000, 1, "A")
        
         stream = io.StringIO("")
         data.save(stream)
-        assert stream.getvalue() == "2;A;123\n1;A;234", stream.getvalue()
-        
-        
+        assert stream.getvalue() == "2;A;0:00:06;None\n1;A;0:00:08;None", stream.getvalue()
         
     def test_display_time(self):
         build_time = lambda value: str(timedelta(milliseconds=value))

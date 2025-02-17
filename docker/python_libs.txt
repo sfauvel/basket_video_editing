@@ -1,3 +1,4 @@
 pytest==6.2.5
 approvaltests==7.4.0
 moviepy==1.0.3
+python-vlc==3.0.21203

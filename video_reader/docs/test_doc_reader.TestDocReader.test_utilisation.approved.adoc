@@ -1,0 +1,14 @@
+= Utilisation
+
+----
+usage: reader.py [-h] [-v VIDEO] [-s SCORE] [-c CSV]
+
+options:
+  -h, --help            show this help message and exit
+  -v VIDEO, --video VIDEO
+                        Chemin vers le fichier video
+  -s SCORE, --score SCORE
+                        Score initial: -s 15-6
+  -c CSV, --csv CSV     Load csv from folder
+
+----

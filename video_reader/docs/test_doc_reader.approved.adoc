@@ -1,0 +1,4 @@
+= Doc reader
+:toc: left
+include::test_doc_reader.TestDocReader.approved.adoc[leveloffset=+1]
+include::test_doc_reader.TestDocReader.test_utilisation.approved.adoc[leveloffset=+2]

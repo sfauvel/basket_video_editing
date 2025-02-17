@@ -1,0 +1,8 @@
+= Video editing
+
+== Tests
+
+Pour executer les tests: 
+----
+../script/run_pytest.sh video_editing
+----

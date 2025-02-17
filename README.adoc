@@ -1,6 +1,20 @@
 = Edition de vidéo de basket
 
-Le but de ce projet est de produire des outils pour manipuler des vidéos de basket.
+Le but de ce projet est de produire des outils pour faire des montages de vidéos de matchs de basket.
+
+On trouve:
+
+* Un lecteur: pour visualiser et noter les moments important d'un match.
+* Un générateur de vidéo: qui va construite les vidéos à partir d'une liste de moments importants.
+* Des scripts: pour faire de l'incrustation d'image, de texte, ...
+* Un détecteur de panier: permet de répérer les moments où un panier a potentiellement été marqué.
+
+
+== Environnement
+
+Le répertoire `docker` contient un `Dockerfile` permettant de construire un environnement de développement.
+
+
 
 
 Prérequis:

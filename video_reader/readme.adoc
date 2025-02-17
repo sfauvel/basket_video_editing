@@ -1,5 +1,8 @@
 = Video Reader
 
+
+
+
 ̀`tkinter` installation
 
 ----
@@ -11,20 +14,6 @@ sudo apt install vlc
 
 
 https://www.makeuseof.com/python-video-media-player-how-to-build/
-
-
-== Launch
-
- When we run the `video_reader.py`, we disable repeating key press by running the following command:
-----
-os.system('xset r off')
-----
-
-That deactivates the repeating key press for the machine. 
-To ractivate it, run the following command:
-----
-xset r on
-----
 
 
 == Development

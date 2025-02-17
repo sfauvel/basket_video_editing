@@ -1,0 +1,6 @@
+= Doc reader
+
+
+Le `reader` permet lire une vidéo et de noter les moments importants (paniers, sequences, ...).
+
+
