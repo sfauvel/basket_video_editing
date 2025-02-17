@@ -1,6 +1,6 @@
 = Seconds to time
 
-Transform a number of seconds to a time as text.
+The function `seconds_to_time` transform a number of seconds to a time as text.
 
 - 5s -> 0:00:05 +
 - 265s -> 0:04:25 +

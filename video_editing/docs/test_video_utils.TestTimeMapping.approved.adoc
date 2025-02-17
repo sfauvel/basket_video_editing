@@ -1,6 +1,6 @@
 = Time mapping
 
 
-Utilities.
+Utilities to map time to string.
 
 

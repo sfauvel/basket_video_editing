@@ -1,18 +1,17 @@
-
-# from doc_as_test_pytest import doc, doc_module
-
+import sys
+sys.path.append('../libs')
 from doc_as_test_pytest import DocAsTest, doc, doc_module
 
 from video_utils import *
 
 class TestTimeMapping:
     """
-    Utilities.
+    Utilities to map time to string.
     """
     
     def test_time_to_seconds(self, doc):
         """
-        Transform the text of a time to the number of seconds. 
+        The function `time_to_seconds` transform the text of a time to the number of seconds. 
         """
         
         def text_time_to_seconds(time):
@@ -36,7 +35,7 @@ class TestTimeMapping:
         
     def test_seconds_to_time(self, doc):
         """
-        Transform a number of seconds to a time as text. 
+        The function `seconds_to_time` transform a number of seconds to a time as text. 
         """
         
         def text_seconds_to_time(seconds):

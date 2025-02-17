@@ -1,4 +1,7 @@
 import subprocess
+
+import sys
+sys.path.append('../libs')
 from doc_as_test_pytest import DocAsTest, doc, doc_module
 
 from reader import *

@@ -13,6 +13,7 @@ function run_on_docker {
 
   docker run \
     -v $(pwd):/project \
+    -v $(readlink -f "$SCRIPT_PATH/../libs"):/libs \
     -v $(readlink -f "$SCRIPT_PATH"):/script \
     -w /project \
     -it $PYTHON_DOCKER_IMAGE \

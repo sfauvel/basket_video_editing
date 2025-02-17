@@ -507,7 +507,7 @@ class MediaPlayerApp(tk.Tk):
     def set_video_position(self, value):
         # Set video position only when video is paused.
         # Otherwise a "get_buffer() failed" occurs when the scrollbar is set
-        # and the video freezzes a few seconds.
+        # and the video freezes a few seconds.
         if self.playing_video:
             if not self.media_player.is_playing():
                 self.playing_video = False
@@ -544,7 +544,7 @@ class VideoProgressBar(tk.Scale):
             value = (event.x / self.winfo_width()) * 100
             self.set(value)
 
-def parse_args():
+def argument_parser(): 
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("-v", "--video", default=None,
@@ -553,21 +553,11 @@ def parse_args():
         help="Score initial: -s 15-6")
     ap.add_argument("-c", "--csv", default=None,
         help="Load csv from folder")
-    args = vars(ap.parse_args())  
-
+    return ap
+    
 if __name__ == "__main__":
     
-    # import argparse
-    # ap = argparse.ArgumentParser()
-    # ap.add_argument("-v", "--video", default=None,
-    #     help="Chemin vers le fichier video")
-    # ap.add_argument("-s", "--score", default="0-0",
-    #     help="Score initial: -s 15-6")
-    # ap.add_argument("-c", "--csv", default=None,
-    #     help="Load csv from folder")
-    # args = vars(ap.parse_args())
-    
-    args = parse_args()
+    args = vars(argument_parser().parse_args())
     
     # # Get first parameter from command line    
     # video_path = sys.argv[1] if len(sys.argv) > 1 else None
