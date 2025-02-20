@@ -1,10 +1,9 @@
 
 import io
-import unittest
 
 from reader import *
 
-class TestEventData(unittest.TestCase):
+class TestEventData():
     def test_add_event_sorted_by_time(self):
         data = EventData()
         data.add_event(123, 2, "A")

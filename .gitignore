@@ -1,6 +1,7 @@
 # Technical folder
 **/__pycache__/
 /.vscode/
+devbox.lock
 
 # Temporary folder
 **/tmp/

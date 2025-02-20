@@ -5,3 +5,11 @@ Pour contruire l'image docker, exécuter la commande: `./build_docker_image.sh`.
 Il construit une image docker avec les dépendances nécessaires pour le projet.
 Elles sont listées dans le fichier `python_libs.txt`.
 
+
+== Test
+
+On passe par un script qui exécute les tests dans un contenaire Docker.
+
+----
+. ./script/run_pytest.sh video_editing/
+----

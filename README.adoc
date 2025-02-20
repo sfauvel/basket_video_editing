@@ -12,32 +12,53 @@ On trouve:
 
 == Environnement
 
+L'environnement est configuré via `https://direnv.net/[direnv]` et `https://www.jetify.com/docs/devbox/[devbox]`.
+
+S'ils sont installés sur la machine, ils se chargeront de mettre en place l'environnement.
+
+.Installation de `https://www.jetify.com/docs/devbox/[devbox]` et `https://direnv.net/[direnv]`
+----
+sudo apt  install direnv
+curl -fsSL https://get.jetify.com/devbox | bash
+----
+
+=== Installation manuelle
+
+Voiic les prérequies, si vous souhaitez faire une installation sur votre environnement:
+
+
+
+----
+Python==3.13
+include::requirements.txt[]
+python3-tk==3.10.8
+----
+
+// Prérequis:
+// ----
+// sudo apt intall magick
+// pip install moviepy
+// pip install scipy
+// 
+// pip install keyboard
+// ----
+
+=== Utilisation avec Docker
+
 Le répertoire `docker` contient un `Dockerfile` permettant de construire un environnement de développement.
 
-
-
-
-Prérequis:
-----
-sudo apt intall magick
-pip install moviepy
-pip install scipy
-
-pip install keyboard
-----
+include::docker/readme.adoc[leveloffset=+3]
 
 == Ressources
-
 
 * https://www.stackbuilders.com/blog/python-video-generation/
 * https://zulko.github.io/moviepy/getting_started/compositing.html
 
 == Test
 
-On passe par un script qui exécute les tests dans un contenaire Docker.
-
+Depuis les sous-répertoires des projets (`video_editing`, `video_reader`), vous pouvez exécuter les tests avec la commande:
 ----
-. ./script/run_pytest.sh video_editing/
+pytest
 ----
 
 == Execution
