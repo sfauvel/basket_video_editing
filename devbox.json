@@ -1,17 +1,15 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.0/.schema/devbox.schema.json",
   "packages": [
-    "python@3.13.1",
-    "python313Packages.pip",
-    "python313Packages.tkinter",
+    "vlc@3.0.16",
+    "python@3.10",
+    "python310Packages.tkinter",
+    "python310Packages.pip@latest",
   ],
   "shell": {
     "init_hook": [
       ". $VENV_DIR/bin/activate",
-      "pip install -r requirements.txt"
+      "pip install -r requirements.txt",
     ],
-    "scripts": {
-      "run_test": "python main.py"
-    }
-  }
+  },
 }

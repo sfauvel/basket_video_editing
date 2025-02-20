@@ -22,10 +22,11 @@ sudo apt  install direnv
 curl -fsSL https://get.jetify.com/devbox | bash
 ----
 
+NOTE: Il peut-être nécessaire de lancer `python` avec un `sudo` car les librairies paratgées peuvent ne pas être accessibles sous `devbox`.
+
 === Installation manuelle
 
 Voiic les prérequies, si vous souhaitez faire une installation sur votre environnement:
-
 
 
 ----
@@ -34,14 +35,6 @@ include::requirements.txt[]
 python3-tk==3.10.8
 ----
 
-// Prérequis:
-// ----
-// sudo apt intall magick
-// pip install moviepy
-// pip install scipy
-// 
-// pip install keyboard
-// ----
 
 === Utilisation avec Docker
 
@@ -134,76 +127,3 @@ or
 python3 test_video_generator.py
 ----
  
- == FFMPEG
-
-ffmpeg -i INPUT -c:v libx265 -an -x265-params crf=25 OUT.mp4
--an: Disable audio
-ffmpeg -i INPUT -c:v libx265 -x265-params crf=25 OUT.mp4
-
-
-== To cut
-
-Cette commande coupe sans réencoder la vidéo (-c copy).
-
-https://stackoverflow.com/questions/18444194/cutting-multimedia-files-based-on-start-and-end-time-using-ffmpeg
-
-----
-ffmpeg -i VID_20241005_160156.mp4 -ss 00:00:10 -t 00:00:15  -c copy cut.mp4 
-----
-
-== Ajouter des sous-titrages à un fichier vidéo
-
-Vous pouvez également ajouter des sous-titrages à un fichier vidéo en utilisant FFmpeg. Téléchargez le fichier de sous-titrage correct pour votre vidéo et ajoutez-le comme indiqué ci-dessous.
-1
-	
-ffmpeg -i input.mp4 -i soutitrage.srt -map 0 -map 1 -c copy  -c:v libx265 -x265-params crf=25 -preset veryfast output.mp4
-
-https://fr.abyssale.com/generate-video/how-to-add-subtitles-to-videos-with-ffmpeg
-
-ffmpeg -i video1.mp4 -vf "subtitles=soutitrage.srt:force_style='Fontsize=20'" -c:a copy -c:v libx264 -crf 23 -preset veryfast output.mp4
-
-
-https://fr.abyssale.com/generate-video/how-to-change-the-appearances-of-subtitles-with-ffmpeg
-
-ffmpeg -i video1.mp4 -vf "ass=soustitre2.srt:force_style='Alignment=6'" -c:a copy -c:v libx264 -crf 23 -preset veryfast output.mp4
-ffmpeg -i video1.mp4 -vf "ass=soustitre2.srt" -c:a copy -c:v libx264 -crf 23 -preset veryfast output.mp4
-
-https://hhsprings.bitbucket.io/docs/programming/examples/ffmpeg/subtitle/ass.html
-
-== Insert image
-
-https://video.stackexchange.com/questions/12105/add-an-image-overlay-in-front-of-video-using-ffmpeg
-ffmpeg -i video1.mp4 -i ../../../SLB_Logo_OK_light.jpg -filter_complex "[0:v][1:v] overlay=5:5:enable='between(t,0,20)'" -pix_fmt yuv420p -c:a copy output.mp4
-ffmpeg -i video1.mp4 -i ../../../SLB_Logo_OK_light.jpg -filter_complex "[0:v][1:v] overlay=5:5" -pix_fmt yuv420p -c:a copy output.mp4
-ffmpeg -i video1.mp4 -i ../../../SLB_Logo_OKpetit_resize.jpg -filter_complex "[0:v][1:v] overlay=5:5" -pix_fmt yuv420p -c:a copy output.mp4
-
-ffmpeg -i video1.mp4 -i ../../../SLB_Logo_OKpetit.png -filter_complex "[0:v][1:v] overlay=5:5:scale=w=320:h=240" -pix_fmt yuv420p -c:a copy output.mp4
-
-
-ffmpeg -i video1.mp4 -vf "ass=soustitre3.ass" -c:a copy -c:v libx264 -crf 23 -preset veryfast output.mp4
-
-
-
-Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Score, Arial,28,&H0000FFFF,&H00FFFF00,&H00303030,&H80000008,-1,0,0,0,100,100,0.00,0.00,1,1.00,2.00, 8 ,30,10,10,0
-Style: Team,  Arial,28,&H0000FFFF,&H00FFFF00,&H00303030,&H80000008,-1,0,0,0,100,100,0.00,0.00,1,1.00,2.00, 8 ,30,10,10,0
-
-Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Alignment, MarginL, MarginR, MarginV, Encoding
-Style : Score,Britannic Bold,32,&H0000FFFF,&H00FFFF00,&H00303030,&H99000000,-1,0,6,30,10,10,0
-Style : Team,Britannic Bold,48,&H0000FFFF,&H00FFFF00,&H00303030,&H99000000,-1,0,6,30,10,10,0
-
-
-== Filter voice
-
-https://stackoverflow.com/questions/21659207/filter-out-voice-frequency-with-ffmpeg
-
-What you're looking for is the bandreject filter I suppose:
-
-ffmpeg -i song.wav -c:a pcm_s16le -af "bandreject=f=900:width_type=h:w=600" out.wav -y
-
-This command attenuates everything between 900 - 600 = 300 Hz and 900 + 600 = 1500 Hz.For some reason the width value can't be higher than 999 Hz... Bear in mind that the attenuation is not perfect so if you want more attenuation you can chain the filter as many time as you want:
-
-ffmpeg -i song.wav -c:a pcm_s16le -af "bandreject=f=900:width_type=h:w=600, bandreject=f=900:width_type=h:w=600" out.wav -y
-
-https://steemit.com/audio/@manero666/ffmpeg-apply-a-filter-to-enhance-voice-by-removing-low-and-high-frequency-noises
-ffmpeg -i MatchX/video/VID_20241005_164132.mp4 -af lowpass=3000,highpass=200 MatchX/output/out.mp4
