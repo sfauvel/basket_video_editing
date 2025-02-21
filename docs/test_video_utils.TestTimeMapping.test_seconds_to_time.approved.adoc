@@ -1,7 +1,0 @@
-= Seconds to time
-
-Transform a number of seconds to a time as text.
-
-- 5s -> 0:00:05 +
-- 265s -> 0:04:25 +
-- 4465s -> 1:14:25

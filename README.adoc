@@ -26,8 +26,7 @@ NOTE: Il peut-être nécessaire de lancer `python` avec un `sudo` car les librai
 
 === Installation manuelle
 
-Voiic les prérequies, si vous souhaitez faire une installation sur votre environnement:
-
+Voici les prérequies, si vous souhaitez faire une installation sur votre environnement:
 
 ----
 Python==3.13
@@ -126,4 +125,3 @@ or
 ----
 python3 test_video_generator.py
 ----
- 
