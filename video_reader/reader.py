@@ -81,7 +81,6 @@ class MediaPlayerApp(tk.Tk):
         self.instance = vlc.Instance()
         self.media_player = self.instance.media_player_new()
         self.current_file = None
-        self.playing_video = False
         self.video_paused = False
         self.needs_to_start_and_end_events = False
         self.rate=1
@@ -121,9 +120,11 @@ class MediaPlayerApp(tk.Tk):
             self.media_canvas.pack(pady=0, fill=tk.BOTH, expand=True)
             
             self.progress_bar = VideoProgressBar(
-                self, self.set_video_position, bg="#e0e0e0", highlightthickness=0
+                self, None, bg="#e0e0e0", highlightthickness=0
+                # self, self.set_video_position, bg="#e0e0e0", highlightthickness=0
             )
             self.progress_bar.pack(fill=tk.X, padx=10, pady=0)
+            self.progress_bar.bind("<Button-1>", self.click_on_progress_bar)
         
         def mk_event_component():
             # Add a scroll bar to scroll through the listbox
@@ -215,7 +216,7 @@ class MediaPlayerApp(tk.Tk):
         self.point3b_button = mk_point_button(TEAM.B, 3, next(iterator))
         self.event_button = mk_point_button(TEAM.START, 0, next(iterator))
         self.event_button = mk_point_button(TEAM.END, 0, next(iterator))
-         
+
         def read_backwards():
             # How stop this loop ?
             self.relative_move(-100)
@@ -311,6 +312,14 @@ class MediaPlayerApp(tk.Tk):
         # self.points_listbox.bind("<<ListboxSelect>>", callback_select_event) # Ne pas binder sur Select sinon le <espace> déclenche l'évenement
         self.points_listbox.bind("<ButtonRelease-1>", callback_select_event)
 
+    def click_on_progress_bar(self, event):
+        print("click_on_progress_bar")
+        if self.progress_bar.cget("state") == tk.NORMAL:
+            print("set")
+            value = (event.x / self.progress_bar.winfo_width()) * 100
+            self.set_video_position(value)
+            self.update_video_progress()
+
     def select_event_in_list(self, widget, index):
         self.points_listbox.selection_clear(0, tk.END)
         self.points_listbox.selection_set(index)
@@ -339,16 +348,14 @@ class MediaPlayerApp(tk.Tk):
         self.media_player.set_rate(self.rate)
     
     def point(self, points, team_name):
-        if self.playing_video:
-            current_time = self.media_player.get_time()
-            current_time_str = str(timedelta(milliseconds=current_time))[:-3]
-            
-            print(f"{points} point for team {team_name}: {current_time_str}")  
-            
-            print(f"point time: {current_time}")
-            event = self.model.add_event(current_time, points, team_name, self.quarter_listbox.get())
-            self.refresh_events()
-            self.select_events_in_listbox(event)
+        current_time = self.media_player.get_time()
+        current_time_str = str(timedelta(milliseconds=current_time))[:-3]
+        
+        print(f"{points} point for team {team_name}: {current_time_str}")  
+        
+        event = self.model.add_event(current_time, points, team_name, self.quarter_listbox.get())
+        self.refresh_events()
+        self.select_events_in_listbox(event)
         
            
     def select_quarter_event(self, event):
@@ -438,8 +445,8 @@ class MediaPlayerApp(tk.Tk):
         
         # When the progress_bar is set, sometimes the set_video_position is called
         # and the video freezes for a few seconds.
-        # progress_percentage = 0 if (total_duration == 0) else (current_time / total_duration) * 100
-        # self.progress_bar.set(progress_percentage) 
+        progress_percentage = 0 if (total_duration == 0) else (current_time / total_duration) * 100
+        self.progress_bar.set(progress_percentage) 
         
         current_time_str = build_time_str(milliseconds=current_time)
         total_duration_str = build_time_str(milliseconds=total_duration)
@@ -460,21 +467,17 @@ class MediaPlayerApp(tk.Tk):
             self.play_video()
             
     def play_video(self):
-        if not self.playing_video:
-            media = self.instance.media_new(self.current_file)
-            self.media_player.set_media(media)
-            #self.media_player.set_hwnd(self.media_canvas.winfo_id())
-            self.media_player.set_xwindow(self.media_canvas.winfo_id())
-            self.set_rate(1)
-           
-            self.media_player.play()
-            self.playing_video = True
+        media = self.instance.media_new(self.current_file)
+        self.media_player.set_media(media)
+        #self.media_player.set_hwnd(self.media_canvas.winfo_id())
+        self.media_player.set_xwindow(self.media_canvas.winfo_id())
+        self.set_rate(1)
+        
+        self.media_player.play()
             
     def relative_move(self, duration):
-        if self.playing_video:
-            print(f"relative_move Current time: {self.media_player.get_time()}")
-            current_time = max(0, self.media_player.get_time() + duration)
-            self.media_player.set_time(current_time)
+        current_time = max(0, self.media_player.get_time() + duration)
+        self.media_player.set_time(current_time)
 
     def fast_forward(self):
         self.relative_move(10000)
@@ -486,42 +489,24 @@ class MediaPlayerApp(tk.Tk):
         self._pause_video(self.video_paused)
                 
     def _pause_video(self, video_paused):
-        current_time=self.media_player.get_time()
-        print(f"_pause_video Current time: {current_time}")
-        if self.playing_video:
-            if video_paused:
-                self.media_player.play()
-                self.video_paused = False
-                self.pause_button.config(text="Pause")
-            else:
-                self.media_player.pause()
-                self.video_paused = True
-                self.pause_button.config(text="Resume")
+        if video_paused:
+            self.media_player.play()
+            self.video_paused = False
+            self.pause_button.config(text="Pause")
+        else:
+            self.media_player.pause()
+            self.video_paused = True
+            self.pause_button.config(text="Resume")
                 
     def stop(self):
-        if self.playing_video:
-            self.media_player.stop()
-            self.playing_video = False
+        self.media_player.stop()
         self.refresh_time()
 
     def set_video_position(self, value):
-        # Set video position only when video is paused.
-        # Otherwise a "get_buffer() failed" occurs when the scrollbar is set
-        # and the video freezes a few seconds.
-        if self.playing_video:
-            if not self.media_player.is_playing():
-                self.playing_video = False
-                self.play_video()
-            self.media_player.is_playing
-            total_duration = self.media_player.get_length()
-            position = int((float(value) / 100) * total_duration)
-            print(f"Setting position to {position}")
-            
-            self.media_player.set_time(position)
+        self.media_player.set_position((float(value) / 100))
 
     def update_video_progress(self):
-        if self.playing_video:
-            self.refresh_time()
+        self.refresh_time()
         self.after(1000, self.update_video_progress)
 
 
@@ -537,12 +522,6 @@ class VideoProgressBar(tk.Scale):
             command=command,
             **kwargs,
         )
-        self.bind("<Button-1>", self.on_click)
-
-    def on_click(self, event):
-        if self.cget("state") == tk.NORMAL:
-            value = (event.x / self.winfo_width()) * 100
-            self.set(value)
 
 def argument_parser(): 
     import argparse
