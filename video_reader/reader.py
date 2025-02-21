@@ -486,17 +486,16 @@ class MediaPlayerApp(tk.Tk):
         self.relative_move(-10000)
 
     def pause_video(self):
-        self._pause_video(self.video_paused)
+        self._pause_video(not self.video_paused)
                 
     def _pause_video(self, video_paused):
+        self.video_paused = video_paused
         if video_paused:
-            self.media_player.play()
-            self.video_paused = False
-            self.pause_button.config(text="Pause")
-        else:
             self.media_player.pause()
-            self.video_paused = True
-            self.pause_button.config(text="Resume")
+        else:
+            self.media_player.play()
+
+        self.pause_button.config(text="Pause" if self.video_paused else "Resume")
                 
     def stop(self):
         self.media_player.stop()
