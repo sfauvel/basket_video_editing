@@ -2,9 +2,9 @@
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.0/.schema/devbox.schema.json",
   "packages": [
     "vlc@3.0.16",
-    "python@3.10",
-    "python310Packages.tkinter",
-    "python310Packages.pip@latest",
+    "python@3.13",
+    "python313Packages.pip@latest",
+    "python313Packages.tkinter@latest",
   ],
   "shell": {
     "init_hook": [
