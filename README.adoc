@@ -84,7 +84,8 @@ python3 video_generator.py [COMMAND] [MATCH FOLDER]
 .Préparation
 - Créer un répertoire `Match_[ANNEE]_[MOIS]_[JOUR]`
 - Créer les sous-répertoire `video` et `csv`
-- Construire les vidéo avec incrustation du logo avec le script `. ./insert_logo.sh Match_[ANNEE]_[MOIS]_[JOUR]`
+- Mettre les vidéos du match dans le répertorie `video`
+- Construire les vidéo avec incrustation du logo avec le script `./insert_logo.sh <Match_[ANNEE]_[MOIS]_[JOUR]> <FICHIER_LOGO>`
 
 .Repérage
 - Aller dans le répertoire `Match_[ANNEE]_[MOIS]_[JOUR]`
