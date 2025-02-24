@@ -79,19 +79,26 @@ python3 video_generator.py [COMMAND] [MATCH FOLDER]
 - all: Génère une seule vidéo de tout le match.
 - full: Génère les vidéos, les highlights et une vidéo par quart temps.
 
-== Steps
+
+== Etapes
+
+.Prérequis
+- La variable `TOOLPATH` pointe sur la racine des outils de manipulation des vidéos.
+- La variable `LOGO_PATH` pointe sur l'image du logo à insérer.
 
 .Préparation
 - Créer un répertoire `Match_[ANNEE]_[MOIS]_[JOUR]`
 - Créer les sous-répertoire `video` et `csv`
+- Positionner la variable `MATCH` avec la commande `MATCH=$(realpath Match_[ANNEE]_[MOIS]_[JOUR])`
 - Mettre les vidéos du match dans le répertorie `video`
-- Construire les vidéo avec incrustation du logo avec le script `./insert_logo.sh <Match_[ANNEE]_[MOIS]_[JOUR]> <FICHIER_LOGO>`
+- Aller dans le répertoire `Match_[ANNEE]_[MOIS]_[JOUR]`
+- Construire les vidéo avec incrustation du logo avec le script `$TOOLPATH/script/insert_logo.sh . $LOGO_PATH`
+
+.Auto détection des paniers
+- En construction...
 
 .Repérage
-- Aller dans le répertoire `Match_[ANNEE]_[MOIS]_[JOUR]`
-
-
-- Construire les fichiers `CSV` en exécutant la commande `python3 ../video_reader/reader.py -s $(python3 ../video_generator.py final_score . | tail -1) -v video/[NOM VIDEO].mp4` sur chaque fichier video
+- Construire les fichiers `CSV` en exécutant la commande `python3 $TOOLPATH/video_reader/reader.py -s $(python3 ../video_generator.py final_score . | tail -1) -v video/[NOM VIDEO].mp4` sur chaque fichier video
 - Modifier le nom des équipes dans le fichier `video_generator.py` au début du `main`.
 - Vérifier le score: `python3 ../video_generator.py score .`
 
