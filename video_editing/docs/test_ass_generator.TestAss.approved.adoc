@@ -1,0 +1,8 @@
+= Ass
+
+
+ASS: https://fr.wikipedia.org/wiki/SubStation_Alpha[SubStation_Alpha]
+
+You can find information in https://github.com/libass/libass/wiki/ASS-File-Format-Guide[ASS-File-Format-Guide]
+
+
