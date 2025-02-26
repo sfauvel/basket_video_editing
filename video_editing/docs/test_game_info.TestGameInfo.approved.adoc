@@ -1,0 +1,6 @@
+= Game info
+
+
+Information of the game is retrieve from the file.
+
+

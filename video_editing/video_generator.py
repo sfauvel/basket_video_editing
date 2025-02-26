@@ -7,6 +7,7 @@ import sys
 import moviepy.editor as mpy
 from moviepy.video import fx
 
+from game_info import GameInfo
 from video_graph import *
 from video_match import *
 
@@ -716,7 +717,10 @@ def extract_clips(video_file, clip_times, time_in_final_video = 0):
 if __name__ == "__main__":
     args = sys.argv
     folder = args[2] if len(args) > 2 else "Match"
-    match = MatchVideo(folder, "SLB", "HERMINE")
+
+    game_info = GameInfo.load(f"{folder}/{GameInfo.FILENAME}")
+
+    match = MatchVideo(folder, game_info.locaux, game_info.visiteurs)
     if args[1] == "spike":
         match.csv_folder = f"{match.root_folder}/test"
         match.video_folder = f"{match.root_folder}/video"

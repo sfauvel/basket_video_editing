@@ -1,0 +1,15 @@
+= Extract info from file
+
+Game information can be retrieve from the text file `info.txt`.
+
+.file content:
+----
+Date: 22/02/2025
+Locaux: Paris
+Visiteurs: Cholet
+----
+
+.info extracted
+- Date: *22/02/2025*
+- Locaux: *Paris*
+- Visiteurs: *Cholet*
