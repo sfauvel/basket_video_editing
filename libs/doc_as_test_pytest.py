@@ -4,7 +4,8 @@ import pytest
 import re
 import textwrap
 from approvaltests.pytest.py_test_namer import PyTestNamer
-from approvaltests.approvals import verify
+from approvaltests.approvals import set_default_reporter,verify
+from approvaltests.reporters import PythonNativeReporter
 
 
 
@@ -34,6 +35,8 @@ class DocAsTest():
         self.content = ""
         self.test_includes = []
         self.test_classes = []
+        set_default_reporter(PythonNativeReporter())
+        
 
     def increment_leveloffset(self):
         self.leveloffset += 1
