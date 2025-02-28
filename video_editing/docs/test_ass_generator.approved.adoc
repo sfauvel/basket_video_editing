@@ -1,4 +1,5 @@
 = Ass generator
 :toc: left
 include::test_ass_generator.TestAss.approved.adoc[leveloffset=+1]
+include::test_ass_generator.TestAss.test_header_section.approved.adoc[leveloffset=+2]
 include::test_ass_generator.TestAss.test_style_section.approved.adoc[leveloffset=+2]

@@ -9,7 +9,15 @@ class TestAss:
 
     You can find information in https://github.com/libass/libass/wiki/ASS-File-Format-Guide[ASS-File-Format-Guide]
     """
-    
+
+    def test_header_section(self, doc): 
+        ass = AssGenerator()
+        doc.write("\n".join([
+            "----",
+            ass.header(),
+            "----",]))
+
+
     def test_style_section(self, doc): 
         ass = AssGenerator()
         doc.write("\n".join([

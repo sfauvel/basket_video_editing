@@ -221,12 +221,8 @@ def generate_ass(filename, csv_folder, video_folder, output_folder, team_a, team
     
 
     ass_generator = AssGenerator()
-    ass_file_content = """
-[Script Info]
-Title: Default Aegisub file
-ScriptType: v4.00+
-
-"""
+    ass_file_content = ass_generator.header()
+    ass_file_content += "\n\n"
     ass_file_content += ass_generator.style()
     ass_file_content += """
 

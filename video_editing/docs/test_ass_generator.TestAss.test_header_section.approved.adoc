@@ -1,0 +1,7 @@
+= Header section
+
+----
+[Script Info]
+Title: Default Aegisub file
+ScriptType: v4.00+
+----
