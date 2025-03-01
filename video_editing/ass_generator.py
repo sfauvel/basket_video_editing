@@ -18,6 +18,12 @@ class Style:
             margin_v=margin_v,
         )
     
+    @staticmethod
+    def header():
+        return """[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+"""      
+
     def __init__(self, 
             name="Default",
             fontname="Arial",
@@ -66,8 +72,31 @@ class Style:
         self.margin_v = margin_v
         self.encoding = encoding
 
+
     def __str__(self):
         return f"Style: {self.name:>7}, {self.fontname:>7},{self.fontsize:>2},{self.primary_colour},{self.secondary_colour},{self.outline_colour},{self.back_colour},{self.bold},{self.italic},{self.underline},{self.strikeout},{self.scale_x},{self.scale_y},{self.spacing},{self.angle},{self.border_style},{self.outline},{self.shadow},{self.alignment},{self.margin_l},{self.margin_r},{self.margin_v},{self.encoding}"
+
+class Event:
+ 
+    def __init__(self, style, text, layer=1, start="0:00:00.00", end="0:00:00.00", name="", marginl=0, marginr=0, marginv=0, effect=""):
+        self.layer = layer
+        self.start = start
+        self.end = end
+        self.style = style
+        self.name = name
+        self.marginl = marginl
+        self.marginr = marginr
+        self.marginv = marginv
+        self.effect = effect
+        self.text = text
+
+    @staticmethod
+    def header(): 
+        return """[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"""
+
+    def __str__(self):
+        return f"Dialogue: {self.layer},{self.start},{self.end},{self.style},{self.name},{self.marginl},{self.marginr},{self.marginv},{self.effect},{self.text}"
 
 class AssGenerator():
 
@@ -76,11 +105,6 @@ class AssGenerator():
 Title: Default Aegisub file
 ScriptType: v4.00+"""
 
-  
-    def _style_header(self):
-        return """[V4+ Styles]
-Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-"""        
 
     def _code_style(self, name, alignment, margin_left, margin_right):
         def style_line(name, opacities, alignment, margin_left, margin_right):
@@ -95,7 +119,7 @@ Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour,
 
     def style(self):
         return "\n".join([
-            self._style_header(),
+            Style.header(),
             str(Style.text("TeamA",  14, "FFFFFF", "FFFFFF", Alignement.RIGHT, 0, 222, 8)),
             str(Style.text("TeamB",  14, "FFFFFF", "FFFFFF", Alignement.LEFT, 222, 0, 8)),
             str(Style.text("Quarter", 6, "00FFFF", "FFFF00", Alignement.CENTER, 0, 0, 5)),
@@ -104,5 +128,19 @@ Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour,
             self._code_style("ScoreA", 9, 200, 0),
             "",
             self._code_style("ScoreB", 7, 0, 200)  
+        ])
+    
+    def events(self, events):
+        for event in events:
+            pass
+
+
+        return "\n".join([
+            Event.header(),
+            "",
+            str(Event(end="0:00:10.00", style="Score", text="-")),
+            str(Event(end="0:00:10.00", style="TeamA", text="SLB")),
+            str(Event(end="0:00:10.00", style="TeamB", text="NBH")),
+            str(Event(end="0:00:10.00", style="Quarter", text="2", layer=2)),
         ])
     

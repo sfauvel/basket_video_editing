@@ -24,6 +24,13 @@ class TestAss:
             "----",
             ass.style(),
             "----",]))
+        
+    def test_event_section(self, doc): 
+        ass = AssGenerator()
+        doc.write("\n".join([
+            "----",
+            ass.events([]),
+            "----",]))
 
 #         
 # Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding

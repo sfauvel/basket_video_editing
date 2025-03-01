@@ -1,0 +1,11 @@
+= Event section
+
+----
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+
+Dialogue: 1,0:00:00.00,0:00:10.00,Score,,0,0,0,,-
+Dialogue: 1,0:00:00.00,0:00:10.00,TeamA,,0,0,0,,SLB
+Dialogue: 1,0:00:00.00,0:00:10.00,TeamB,,0,0,0,,NBH
+Dialogue: 2,0:00:00.00,0:00:10.00,Quarter,,0,0,0,,2
+----
