@@ -550,7 +550,8 @@ if __name__ == "__main__":
     app.launch_video(video_path)
     if csv_path and video_path:
         filename = os.path.basename(video_path)
-        csv_filename = csv_path + "/" + os.path.splitext(filename)[0] + ".csv"
+        print( os.path.splitext(filename)[0])
+        csv_filename = csv_path + "/" + os.path.splitext(filename)[0].replace(".output", "") + ".csv"
         print(csv_filename)
         app.load_csv_file(csv_filename)
         app.needs_to_start_and_end_events = True

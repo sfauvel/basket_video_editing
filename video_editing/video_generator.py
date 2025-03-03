@@ -494,8 +494,8 @@ class MatchVideo:
         # self.highlight_team_points(team_to_highlight, duration_before, duration_after, build_input_video_filename)
         
         # team_to_highlight = "A" if self.team_a == "SLB" else "B"
-        self.highlight_team_points("A", duration_before, duration_after, build_input_video_filename, self.team_a.lower().replace(" ", "_"))
-        self.highlight_team_points("B", duration_before, duration_after, build_input_video_filename, self.team_b.lower().replace(" ", "_"))
+        self.highlight_team_points("A", duration_before, duration_after, build_input_video_filename, self.team_a)
+        self.highlight_team_points("B", duration_before, duration_after, build_input_video_filename, self.team_b)
         
         # self.highlight_points(duration_before, duration_after, build_input_video_filename)
         # self.highlight_all_points(duration_before, duration_after, build_input_video_filename)
@@ -506,7 +506,9 @@ class MatchVideo:
         def team_points(event):
             return int(event.points) > 1 and event.team.upper() == team
         
-        higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_{team_name}", team_points, duration_before, duration_after, build_input_video_filename)
+        filename = f"{self.root_name}_paniers_{team_name.lower().replace(" ", "_").replace("/", "_")}"
+
+        higlights(self.csv_folder, self.output_folder, self.output_folder, filename, team_points, duration_before, duration_after, build_input_video_filename)
         
     def highlight_points(self, duration_before = 7, duration_after = 2, build_input_video_filename = lambda filename: filename):
         def points(event):
