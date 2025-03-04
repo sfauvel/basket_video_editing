@@ -116,6 +116,12 @@ def files_sorted(pattern):
     files.sort()
     return files 
 
+
+def files_before(pattern, first_file_exclude):
+    files = glob.glob(pattern)
+    files.sort()
+    return [file for file in files if file < first_file_exclude] 
+
 def generate_from_dir(csv_folder, video_folder, output_folder, team_a, team_b):
     score=Score(0,0)
     for file in files_sorted(f'{video_folder}/*.mp4'):
@@ -506,7 +512,7 @@ class MatchVideo:
         def team_points(event):
             return int(event.points) > 1 and event.team.upper() == team
         
-        filename = f"{self.root_name}_paniers_{team_name.lower().replace(" ", "_").replace("/", "_")}"
+        filename = f'{self.root_name}_paniers_{team_name.lower().replace(" ", "_").replace("/", "_")}'
 
         higlights(self.csv_folder, self.output_folder, self.output_folder, filename, team_points, duration_before, duration_after, build_input_video_filename)
         
@@ -554,6 +560,11 @@ class MatchVideo:
     
     def final_score(self):
         match_parts = MatchPart.concat_match_parts([MatchPart.build_from_csv(f"{file}") for file in files_sorted(f'{self.csv_folder}/*.csv')])        
+        score = match_parts.final_score()
+        return f"{score.team_a}-{score.team_b}"
+    
+    def final_score_before(self, first_file_exclude):
+        match_parts = MatchPart.concat_match_parts([MatchPart.build_from_csv(f"{file}") for file in files_before(f'{self.csv_folder}/*.csv', f"{self.csv_folder}/{first_file_exclude}")])        
         score = match_parts.final_score()
         return f"{score.team_a}-{score.team_b}"
     
@@ -731,6 +742,12 @@ if __name__ == "__main__":
         print(match.display_score())
     elif args[1] == "final_score":
         print(match.final_score())
+    elif args[1] == "score_before":
+        before_csv_file = args[3] if len(args) > 3 else None
+        if before_csv_file:
+            print(match.final_score_before(before_csv_file))
+        else:
+            print(match.final_score())
         
     elif args[1] == "extract":
         match.extract("big_fautes")
