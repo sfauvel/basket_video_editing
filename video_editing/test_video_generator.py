@@ -167,6 +167,24 @@ class TestVideoGenerator(unittest.TestCase):
         assert states[1].end == 6
         assert states[1].score.team_a == 7
         assert states[1].score.team_b == 3
+
+
+    def test_build_match_part_from_csv_with_empty_lines(self):
+        Folder.recreate("tmp")
+        events = [EventRecord(2,"A",5),EventRecord(1,"B",6),EventRecord(3,"A",7),EventRecord(0,"X",9)]
+        with (open("tmp/tmp1.csv", "w")) as csv_file:
+            csv_file.write("\n")
+            csv_file.write("\n\n\n".join([e.to_csv() for e in events]))
+            csv_file.write("\n")
+            csv_file.write("\n")
+
+            print("\n".join([e.to_csv() for e in events]))
+            
+        match_part = MatchPart.build_from_csv("tmp/tmp1.csv", Score(5,3))
+                
+        states = match_part.states()
+        
+        assert len(states) == 4
         
     def test_extract_infos(self):
         infos = EventFile().extract_lines_infos([

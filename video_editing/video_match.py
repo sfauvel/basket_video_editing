@@ -51,7 +51,7 @@ class MatchState:
 class MatchPart:
     def build_from_csv(csv_file, score=Score(0,0)):
         content = read_content_of_file(csv_file)
-        events = [EventRecord.from_csv(line) for line in content]
+        events = [EventRecord.from_csv(line) for line in content if line.strip() != ""]
             
         return MatchPart(0, 0, events, score)
     
