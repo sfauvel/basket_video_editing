@@ -156,8 +156,10 @@ ScriptType: v4.00+"""
         for event in events:
             pass
 
+        events_str = "\n".join([str(event) for event in events])
         return "\n".join([
             Event.header(),
+            events_str,
             "",
             str(Event(end=self.duration_in_seconds, style="Score", text="-")),
             str(Event(end=self.duration_in_seconds, style="TeamA", text=self.team_local)),

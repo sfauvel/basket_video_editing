@@ -8,7 +8,7 @@ import moviepy.editor as mpy
 from moviepy.video import fx
 
 from game_info import GameInfo
-from ass_generator import AssGenerator
+from ass_generator import AssGenerator, Event
 from video_graph import *
 from video_match import *
 
@@ -179,23 +179,20 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, team_
     return score
 
 # Generate score to display
-def generate_ass_clips(states, team_a, team_b, size, delay_after_event=1):
+def generate_events(states, team_a, team_b, size, delay_after_event=1):
     delay = 0
-    ass = ""
+    events = []
     for state in states:
               
         # Add a delay to display score after the event.
         start = state.start+delay
         delay = delay_after_event
         end = state.end+delay
-       
-        ## Build .ass for fffmpeg
-        # ass += f"Dialogue: 0,{AssGenerator.time_to_str(start)},{AssGenerator.time_to_str(end)},Score,,0,0,0,,{state.score.team_a} - {state.score.team_b}\n"
-        ass += f"Dialogue: 0,{AssGenerator.time_to_str(start)},{AssGenerator.time_to_str(end)},ScoreA,,0,0,0,,{state.score.team_a}\n"
-        ass += f"Dialogue: 0,{AssGenerator.time_to_str(start)},{AssGenerator.time_to_str(end)},ScoreB,,0,0,0,,{state.score.team_b}\n"
-        ####
         
-    return ass
+        events.append(Event("ScoreA", layer=0, text=str(state.score.team_a), start=start, end=end))
+        events.append(Event("ScoreB", layer=0, text=str(state.score.team_b), start=start, end=end))
+
+    return events
    
 # Get information from the file and insert the score to the video.
 # Info should be in file [csv_folder]/[filename].csv.
@@ -215,39 +212,23 @@ def generate_ass(filename, csv_folder, video_folder, output_folder, team_a, team
     duration = video_clip.duration
     print(f"    Duration: {duration}s")
     
-    clips = [video_clip]
+    # clips = [video_clip]
     
     csv_file=f"{csv_folder}/{filename}.csv" 
     print(f"    CSV: {csv_file}")  
-    
-
-    ass_generator = AssGenerator()
-    ass_file_content = ass_generator.header()
-    ass_file_content += "\n\n"
-    ass_file_content += ass_generator.style()
-    ass_file_content += """
-
-[Events]
-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-"""
 
     if os.path.isfile(csv_file):
         match_part = MatchPart.build_from_csv(csv_file, score)
         states = match_part.states(duration)
-        # clips += generate_score_clips(states, team_a, team_b, screen_size)
-        ass_file_content += generate_ass_clips(states, team_a, team_b, screen_size)
         score = match_part.final_score()
-    
-        # print(f"Dialogue: 0,0:00:00.00,{AssGenerator.time_to_str(duration)},Team,,0,0,0,,{team_a}                     {team_b}", )
-        ass_file_content += f"""
-        
-Dialogue: 1,0:00:00.00{AssGenerator.time_to_str(duration)},Score,,0,0,0,,-
-Dialogue: 1,0:00:00.00{AssGenerator.time_to_str(duration)},TeamA,,0,0,0,,{team_a}
-Dialogue: 1,0:00:00.00{AssGenerator.time_to_str(duration)},TeamB,,0,0,0,,{team_b} 
-Dialogue: 2,0:00:00.00{AssGenerator.time_to_str(duration)},Quarter,,0,0,0,,{states[-1].quarter_time}"""
-        # print(csv_file)
-        # print(states[-1])
-        # # print( '\n'.join([str(s) for s in states]))
+
+        # clips += generate_score_clips(states, team_a, team_b, screen_size)
+        ass_generator = AssGenerator(duration, team_a, team_b, states[-1].quarter_time)
+        ass_file_content = ass_generator.header()
+        ass_file_content += "\n\n"
+        ass_file_content += ass_generator.style()
+        ass_file_content += "\n\n"
+        ass_file_content += ass_generator.events(generate_events(states, team_a, team_b, screen_size))
     
         os.makedirs(output_folder, exist_ok=True)
         
