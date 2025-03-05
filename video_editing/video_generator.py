@@ -179,7 +179,7 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, team_
     return score
 
 # Generate score to display
-def generate_events(states, team_a, team_b, size, delay_after_event=1):
+def generate_events(states, delay_after_event=1):
     delay = 0
     events = []
     for state in states:
@@ -212,8 +212,6 @@ def generate_ass(filename, csv_folder, video_folder, output_folder, team_a, team
     duration = video_clip.duration
     print(f"    Duration: {duration}s")
     
-    # clips = [video_clip]
-    
     csv_file=f"{csv_folder}/{filename}.csv" 
     print(f"    CSV: {csv_file}")  
 
@@ -222,21 +220,18 @@ def generate_ass(filename, csv_folder, video_folder, output_folder, team_a, team
         states = match_part.states(duration)
         score = match_part.final_score()
 
-        # clips += generate_score_clips(states, team_a, team_b, screen_size)
         ass_generator = AssGenerator(duration, team_a, team_b, states[-1].quarter_time)
         ass_file_content = ass_generator.header()
         ass_file_content += "\n\n"
         ass_file_content += ass_generator.style()
         ass_file_content += "\n\n"
-        ass_file_content += ass_generator.events(generate_events(states, team_a, team_b, screen_size))
+        ass_file_content += ass_generator.events(generate_events(states))
     
         os.makedirs(output_folder, exist_ok=True)
-        
         output_file=f"{output_folder}/{filename}.ass"
-        if not os.path.isfile(output_file):
-            with open(f"{output_file}", "w") as file_ass:
-                file_ass.write(ass_file_content)
-
+        with open(f"{output_file}", "w") as file_ass:
+            file_ass.write(ass_file_content)
+    
     else:
         print("    No csv file")
     
