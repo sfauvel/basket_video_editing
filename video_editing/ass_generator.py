@@ -78,7 +78,7 @@ Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour,
 
 class Event:
  
-    def __init__(self, style, text, layer=1, start="0:00:00.00", end="0:00:00.00", name="", marginl=0, marginr=0, marginv=0, effect=""):
+    def __init__(self, style, text, layer=1, start=0, end=0, name="", marginl=0, marginr=0, marginv=0, effect=""):
         self.layer = layer
         self.start = start
         self.end = end
@@ -96,9 +96,28 @@ class Event:
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"""
 
     def __str__(self):
-        return f"Dialogue: {self.layer},{self.start},{self.end},{self.style},{self.name},{self.marginl},{self.marginr},{self.marginv},{self.effect},{self.text}"
+        return f"Dialogue: " + ",".join([
+            str(self.layer),
+            AssGenerator.time_to_str(self.start),
+            AssGenerator.time_to_str(self.end),
+            str(self.style),
+            self.name,
+            str(self.marginl),
+            str(self.marginr),
+            str(self.marginv),
+            self.effect,
+            self.text
+        ])
 
 class AssGenerator():
+
+    def time_to_str(seconds):
+        mm, ss = divmod(seconds, 60)
+        hh, mm = divmod(mm, 60)
+        return "%d:%02d:%02d.00" % (hh, mm, ss)
+
+    def __init__(self, duration_in_seconds=0):
+        self.duration_in_seconds = duration_in_seconds
 
     def header(self):
         return """[Script Info]
@@ -134,13 +153,12 @@ ScriptType: v4.00+"""
         for event in events:
             pass
 
-
         return "\n".join([
             Event.header(),
             "",
-            str(Event(end="0:00:10.00", style="Score", text="-")),
-            str(Event(end="0:00:10.00", style="TeamA", text="SLB")),
-            str(Event(end="0:00:10.00", style="TeamB", text="NBH")),
-            str(Event(end="0:00:10.00", style="Quarter", text="2", layer=2)),
+            str(Event(end=self.duration_in_seconds, style="Score", text="-")),
+            str(Event(end=self.duration_in_seconds, style="TeamA", text="SLB")),
+            str(Event(end=self.duration_in_seconds, style="TeamB", text="NBH")),
+            str(Event(end=self.duration_in_seconds, style="Quarter", text="2", layer=2)),
         ])
     

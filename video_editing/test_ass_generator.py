@@ -26,8 +26,11 @@ class TestAss:
             "----",]))
         
     def test_event_section(self, doc): 
-        ass = AssGenerator()
+        duration_in_seconds=120
+        ass = AssGenerator(duration_in_seconds)
         doc.write("\n".join([
+            f"With a video duration of {duration_in_seconds} seconds.",
+            "",
             "----",
             ass.events([]),
             "----",]))
@@ -53,4 +56,12 @@ class TestAss:
 
 # Style: Quarter, Arial, 6,&H0000FFFF,&H00FFFF00,&H00303030,&H80000008,-1,0,0,0,100,100,0.00,0.00,1,1.00,2.00, 8 ,0,0,5,0
 
-        
+    def test_time_to_str(self, doc): 
+        values = [0, 1, 60, 3600, 36000]
+        doc.write("\n".join([
+            "|====",
+            "| Time in seconds | Ass time",
+            "",
+            "\n".join([f"| {time} | {AssGenerator.time_to_str(time)}" for time in values]),
+            "|====",
+            ]))

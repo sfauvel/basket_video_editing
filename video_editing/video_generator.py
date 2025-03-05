@@ -178,11 +178,6 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, team_
     
     return score
 
-def build_time_str(seconds):
-        mm, ss = divmod(seconds, 60)
-        hh, mm = divmod(mm, 60)
-        return "%d:%02d:%02d" % (hh, mm, ss)
-
 # Generate score to display
 def generate_ass_clips(states, team_a, team_b, size, delay_after_event=1):
     delay = 0
@@ -195,9 +190,9 @@ def generate_ass_clips(states, team_a, team_b, size, delay_after_event=1):
         end = state.end+delay
        
         ## Build .ass for fffmpeg
-        # ass += f"Dialogue: 0,{build_time_str(state.start)}.00,{build_time_str(state.end)}.00,Score,,0,0,0,,{state.score.team_a} - {state.score.team_b}\n"
-        ass += f"Dialogue: 0,{build_time_str(start)}.00,{build_time_str(end)}.00,ScoreA,,0,0,0,,{state.score.team_a}\n"
-        ass += f"Dialogue: 0,{build_time_str(start)}.00,{build_time_str(end)}.00,ScoreB,,0,0,0,,{state.score.team_b}\n"
+        # ass += f"Dialogue: 0,{AssGenerator.time_to_str(start)},{AssGenerator.time_to_str(end)},Score,,0,0,0,,{state.score.team_a} - {state.score.team_b}\n"
+        ass += f"Dialogue: 0,{AssGenerator.time_to_str(start)},{AssGenerator.time_to_str(end)},ScoreA,,0,0,0,,{state.score.team_a}\n"
+        ass += f"Dialogue: 0,{AssGenerator.time_to_str(start)},{AssGenerator.time_to_str(end)},ScoreB,,0,0,0,,{state.score.team_b}\n"
         ####
         
     return ass
@@ -243,13 +238,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         ass_file_content += generate_ass_clips(states, team_a, team_b, screen_size)
         score = match_part.final_score()
     
-        # print(f"Dialogue: 0,0:00:00.00,{build_time_str(duration)}.00,Team,,0,0,0,,{team_a}                     {team_b}", )
+        # print(f"Dialogue: 0,0:00:00.00,{AssGenerator.time_to_str(duration)},Team,,0,0,0,,{team_a}                     {team_b}", )
         ass_file_content += f"""
         
-Dialogue: 1,0:00:00.00,{build_time_str(duration)}.00,Score,,0,0,0,,-
-Dialogue: 1,0:00:00.00,{build_time_str(duration)}.00,TeamA,,0,0,0,,{team_a}
-Dialogue: 1,0:00:00.00,{build_time_str(duration)}.00,TeamB,,0,0,0,,{team_b} 
-Dialogue: 2,0:00:00.00,{build_time_str(duration)}.00,Quarter,,0,0,0,,{states[-1].quarter_time}"""
+Dialogue: 1,0:00:00.00{AssGenerator.time_to_str(duration)},Score,,0,0,0,,-
+Dialogue: 1,0:00:00.00{AssGenerator.time_to_str(duration)},TeamA,,0,0,0,,{team_a}
+Dialogue: 1,0:00:00.00{AssGenerator.time_to_str(duration)},TeamB,,0,0,0,,{team_b} 
+Dialogue: 2,0:00:00.00{AssGenerator.time_to_str(duration)},Quarter,,0,0,0,,{states[-1].quarter_time}"""
         # print(csv_file)
         # print(states[-1])
         # # print( '\n'.join([str(s) for s in states]))
