@@ -27,9 +27,17 @@ class TestAss:
         
     def test_event_section(self, doc): 
         duration_in_seconds=120
-        ass = AssGenerator(duration_in_seconds)
+        team_local="SLB"
+        team_visitor="NBH"
+        quarter=2
+        ass = AssGenerator(duration_in_seconds, team_local, team_visitor, quarter)
         doc.write("\n".join([
-            f"With a video duration of {duration_in_seconds} seconds.",
+            "We generate an event section for:",
+            "",    
+            f"* a duration of *{duration_in_seconds}* seconds",
+            f"* a local team *{team_local}*",
+            f"* a visitor team *{team_visitor}*",
+            f"* on quart *{quarter}*",
             "",
             "----",
             ass.events([]),

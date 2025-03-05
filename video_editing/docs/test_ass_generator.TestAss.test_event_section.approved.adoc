@@ -1,6 +1,11 @@
 = Event section
 
-With a video duration of 120 seconds.
+We generate an event section for:
+
+* a duration of *120* seconds
+* a local team *SLB*
+* a visitor team *NBH*
+* on quart *2*
 
 ----
 [Events]

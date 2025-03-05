@@ -116,8 +116,11 @@ class AssGenerator():
         hh, mm = divmod(mm, 60)
         return "%d:%02d:%02d.00" % (hh, mm, ss)
 
-    def __init__(self, duration_in_seconds=0):
+    def __init__(self, duration_in_seconds=0, team_local="LOCAL", team_visitor="VISITOR", quarter = 1):
         self.duration_in_seconds = duration_in_seconds
+        self.team_local = team_local
+        self.team_visitor = team_visitor    
+        self.quarter = quarter
 
     def header(self):
         return """[Script Info]
@@ -157,8 +160,8 @@ ScriptType: v4.00+"""
             Event.header(),
             "",
             str(Event(end=self.duration_in_seconds, style="Score", text="-")),
-            str(Event(end=self.duration_in_seconds, style="TeamA", text="SLB")),
-            str(Event(end=self.duration_in_seconds, style="TeamB", text="NBH")),
-            str(Event(end=self.duration_in_seconds, style="Quarter", text="2", layer=2)),
+            str(Event(end=self.duration_in_seconds, style="TeamA", text=self.team_local)),
+            str(Event(end=self.duration_in_seconds, style="TeamB", text=self.team_visitor)),
+            str(Event(end=self.duration_in_seconds, style="Quarter", text=str(self.quarter), layer=2)),
         ])
     
