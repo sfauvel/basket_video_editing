@@ -1,4 +1,5 @@
 import cv2 as cv
+import os
 import numpy as np
 from datetime import timedelta
 
@@ -182,6 +183,11 @@ class ExtractMatchingZone(FrameTransformer):
         # If may do a pre-treatmeent to find values to use (search for the pattern at different moment in all the image)
         y_start_search = 50
         y_end_search = 400
+        
+        for (image, _) in image_patterns:
+            if not os.path.isfile(image):
+                raise ValueError(f"Pattern image file {image} does not exist")
+
         self.patterns_search = [(LookingForPattern(self.blur(cv.imread(pattern)), y_start_search, y_end_search), basket_area) for (pattern, basket_area) in image_patterns]
 
         self.check_move = CheckMove()
