@@ -35,6 +35,37 @@ ffmpeg -i video1.mp4 -vf "ass=soustitre2.srt" -c:a copy -c:v libx264 -crf 23 -pr
 
 https://hhsprings.bitbucket.io/docs/programming/examples/ffmpeg/subtitle/ass.html
 
+https://www.baeldung.com/linux/subtitles-ffmpeg
+
+=== Ajouter des sous-titres sans réencodage
+
+
+.Fichier .srt
+----
+1
+00:00:00,000 --> 00:00:02,000
+0 - 0
+
+2
+00:00:02,000 --> 00:00:4,000
+2 - 0
+----
+
+Les sous titres peuvent être ajouté lors de la lecture avec VLC, en ajoutant le fichier +
+- soit via les menus +
+- soit avec l'option `sub-file` en ligne de commande
+
+.Lancement de VLC avec sous titre
+----
+vlc [FICHIER.mp4] --sub-file subtitle.srt 
+----
+
+.Construction d'un fichier avec sous titre (à activer dans VLC)
+----
+ffmpeg -i $MATCH -i subtitle.srt -c copy -c:s mov_text -metadata:s:s:0 language=eng output.mp4
+----
+
+
 == Insert image
 
 https://video.stackexchange.com/questions/12105/add-an-image-overlay-in-front-of-video-using-ffmpeg
