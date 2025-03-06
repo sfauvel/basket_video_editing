@@ -45,6 +45,8 @@ class VideoPlayer:
         videoCapture.set(cv.CAP_PROP_POS_FRAMES, start_at_frame) 
         nb_frame=start_at_frame
             
+        
+        last_key = None
         while True:
             if end_at_frame is not None and nb_frame > end_at_frame:
                 self.log(f"Last expected frame({end_at_frame}) reached. Stop video.")
@@ -61,12 +63,13 @@ class VideoPlayer:
             if show_video:
                 cv.imshow('frame', frame)
                 
-                
-            key = cv.waitKey(1) & 0xFF
-            if key == ord('q'):
+            
+            if last_key == ord('q'):
                 break
-            elif key == ord(' '):
-                cv.waitKey(0)
+            elif last_key == ord(' '):
+                last_key = cv.waitKey(0)  & 0xFF
+            else:
+                last_key = cv.waitKey(1) & 0xFF
                 
             if by_step:
                 nb_frame += by_step
