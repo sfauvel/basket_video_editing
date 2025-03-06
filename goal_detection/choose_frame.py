@@ -75,6 +75,62 @@ class FrameByFrame(FrameTransformer):
         return frame
     
 
+
+class SelectZone(FrameTransformer):
+    def __init__(self,filename, pattern_haut_droit=Point(0, 0),pattern_bas_gauche=Point(0, 0)):
+        super().__init__()
+        self.filename = filename
+        self.pattern_haut_droit = pattern_haut_droit
+        self.pattern_bas_gauche = pattern_bas_gauche
+        self.button_down = False
+
+    def drawfunction(self, event,x,y,flags,param):
+        if event == cv.EVENT_LBUTTONDBLCLK:
+            print(f"Double Click {x}, {y}")
+            
+        if event == cv.EVENT_RBUTTONDOWN:
+            print(f"Right click {x}, {y}")
+            
+        if event == cv.EVENT_LBUTTONDOWN:
+            print(f"Left click down {x}, {y}")
+            self.pattern_haut_droit = Point(x, y)
+            self.button_down = True
+            
+        if event == cv.EVENT_LBUTTONUP:
+            print(f"Left click up {x}, {y}")
+            self.pattern_bas_gauche = Point(x, y)
+            self.button_down = False
+            
+            self.frame_to_draw = self.current_frame.copy()
+            DrawRectangle(self.pattern_haut_droit, self.pattern_bas_gauche,  (200, 200, 0)).apply(self.frame_to_draw, self.current_context),            
+            SaveRectangle(self.filename, self.pattern_haut_droit, self.pattern_bas_gauche).apply(self.current_frame, None)
+            cv.imshow('frame', self.frame_to_draw)
+        
+        if event == cv.EVENT_MOUSEMOVE:
+            if self.button_down:
+                print(f"Mouse move {x}, {y}")
+                self.pattern_bas_gauche = Point(x, y)
+                
+                self.frame_to_draw = self.current_frame.copy()
+                DrawRectangle(self.pattern_haut_droit, self.pattern_bas_gauche,  (200, 200, 0)).apply(self.frame_to_draw, self.current_context),            
+                
+                cv.imshow('frame', self.frame_to_draw)
+
+
+    def apply(self, frame, context=None):      
+        print(self.pattern_bas_gauche)  
+
+        self.current_frame = frame
+        self.current_context = context
+        
+        self.frame_to_draw = self.current_frame.copy()
+        DrawRectangle(self.pattern_haut_droit, self.pattern_bas_gauche,  (200, 200, 0)).apply(self.frame_to_draw, context),
+        
+        cv.setMouseCallback('frame',self.drawfunction)
+
+        return self.frame_to_draw
+    
+
 class OneFrame(FrameTransformer):
     def apply(self, frame, context=None):
         cv.imshow('frame', frame)
@@ -85,12 +141,19 @@ if __name__ == "__main__":
     args = sys.argv
     filename = args[1]
         
-    pattern_haut_droit = Point(1200, 100)
-    pattern_bas_gauche = Point(1450, 350)
+    # pattern_haut_droit = Point(440, 157)
+    # pattern_bas_gauche = Point(620, 301)
+    # pattern_color = (200, 0, 0)
+    
+    # basket_into_haut_droit = Point(85,25)
+    # basket_into_bas_gauche = Point(165,130)
+
+    pattern_haut_droit = Point(1056, 157)
+    pattern_bas_gauche = Point(1229, 301)
     pattern_color = (200, 0, 0)
     
-    basket_into_haut_droit = Point(30,70)
-    basket_into_bas_gauche = Point(170,190)
+    basket_into_haut_droit = Point(5,30)
+    basket_into_bas_gauche = Point(115,115)
     
     basket_haut_droit = Point(pattern_haut_droit.x+basket_into_haut_droit.x, 
                               pattern_haut_droit.y+basket_into_haut_droit.y)
@@ -105,7 +168,6 @@ if __name__ == "__main__":
     area_in_video = [
                         DrawRectangle(pattern_haut_droit, pattern_bas_gauche, pattern_color),
                         WriteInFrame("Pattern", Point(pattern_haut_droit.x, pattern_haut_droit.y-10), pattern_color),
-                        SaveRectangle("../tmp/pattern.jpg", pattern_haut_droit, pattern_bas_gauche),
                         
                         DrawRectangle(basket_haut_droit, basket_bas_gauche, basket_color),
                         WriteInFrame("Basket", Point(basket_haut_droit.x, basket_haut_droit.y-10), basket_color),
@@ -114,17 +176,22 @@ if __name__ == "__main__":
                         WriteInFrame("Search zone", Point(search_area_haut_droit.x, search_area_haut_droit.y-10), search_area_color),
                         
                         DisplayContext(),
-                        FrameByFrame(),
+                        SelectZone("tmp/pattern.jpg", pattern_haut_droit, pattern_bas_gauche) # Le select zone fait l'enregistrement de l'image
+                        # SaveRectangle("tmp/pattern.jpg", select_zone.pattern_haut_droit, select_zone.pattern_bas_gauche),
+                        # FrameByFrame(),
                     ] 
     
     area_in_image = [
-        DrawRectangleFromInput("../tmp/basket.txt"),
+        DrawRectangleFromInput("tmp/basket.txt"),
     ]
     
+    # First choose frame with area_in_video => file pattern.jpg
+    # Second set zone with area_in_image 
     VideoPlayer().play(filename, 
                     area_in_video,
                     # area_in_image,
                     show_video=True,
-                    start_at_frame=871,
+                    start_at_frame=615,
+                    # start_at_frame=1771,
                     # end_at_frame=1950
                 )
