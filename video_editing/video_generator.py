@@ -161,7 +161,7 @@ def generate_from_video(filename, csv_folder, video_folder, output_folder, team_
         print("    No csv file")
     
     os.makedirs(output_folder, exist_ok=True)
-    output_file=f"{output_folder}/{filename}.output.mp4"
+    output_file=f"{output_folder}/{filename}.mp4"
     print(f"    Output video: {output_file}")
     print(f"    Final score: {score}")  
     
@@ -240,13 +240,13 @@ def generate_ass(filename, csv_folder, video_folder, output_folder, team_a, team
     return score
 
     
-def concat_file(folder, files, output_filename="full.mp4"): 
+def concat_file(folder, files, output_filepath="full.mp4"): 
     print(files)
     with open(f"{folder}/file_list.txt", "w") as file_list_file:
         file_list_file.write("\n".join([f"file '{filename}'" for filename in files]))
   
-    print(f"Output: {output_filename}")
-    prog = f'ffmpeg -f concat -i {folder}/file_list.txt -c copy {folder}/{output_filename}'
+    print(f"Output: {output_filepath}")
+    prog = f'ffmpeg -f concat -i {folder}/file_list.txt -c copy {output_filepath}'
     print(prog)
     os.system(prog)
     
@@ -419,10 +419,10 @@ class MatchVideo:
                     csv_filter=input_data)
         
     def create_single_video(self):
-        pattern="*.output.mp4"
+        pattern="*.mp4"
         files = [file.split('/')[-1] for file in files_sorted(f"{self.output_folder}/{pattern}")]
     
-        concat_file(self.output_folder, files, f"{self.root_name}_complet.mp4")
+        concat_file(self.output_folder, files, f"{self.root_folder}/{self.root_name}_complet.mp4")
         
     def create_single_by_quarter(self):
         compute_key = lambda quarter: quarter
@@ -430,7 +430,7 @@ class MatchVideo:
         all_files = self.split_by_quarter(compute_key)
     
         for (key, files) in all_files.items():
-            concat_file(self.output_folder, files, f"{self.root_name}_quart_temps_{key}.mp4")
+            concat_file(self.output_folder, files, f"{self.root_folder}/{self.root_name}_quart_temps_{key}.mp4")
     
     def create_single_by_halftime(self):
         compute_key = lambda quarter: math.ceil(quarter / 2)
@@ -438,15 +438,15 @@ class MatchVideo:
         all_files = self.split_by_quarter(compute_key)
        
         for (key, files) in all_files.items(): 
-            concat_file(self.output_folder, files, f"{self.root_name}_mi_temps_{key}.mp4")
+            concat_file(self.output_folder, files, f"{self.root_folder}/{self.root_name}_mi_temps_{key}.mp4")
             
     def split_by_quarter(self, compute_key):
-        pattern="*.output.mp4"
+        pattern="*.mp4"
         files = [file.split('/')[-1] for file in files_sorted(f"{self.output_folder}/{pattern}")]
       
         all_files = {}
         for file in files:
-            filename=os.path.basename(file).replace(".output.mp4", "")
+            filename=os.path.basename(file).replace(".mp4", "")
             csv_file=f"{self.csv_folder}/{filename}.csv"
             if os.path.isfile(csv_file):
                 match = MatchPart.build_from_csv(csv_file)
@@ -462,8 +462,6 @@ class MatchVideo:
         return all_files
         
     def highlight(self): 
-        build_input_video_filename = lambda filename: f"{filename}.output"
-        
         duration_before = 7
         duration_after = 2
         
@@ -471,8 +469,8 @@ class MatchVideo:
         # self.highlight_team_points(team_to_highlight, duration_before, duration_after, build_input_video_filename)
         
         # team_to_highlight = "A" if self.team_a == "SLB" else "B"
-        self.highlight_team_points("A", duration_before, duration_after, build_input_video_filename, self.team_a)
-        self.highlight_team_points("B", duration_before, duration_after, build_input_video_filename, self.team_b)
+        self.highlight_team_points("A", duration_before, duration_after, team_name=self.team_a)
+        self.highlight_team_points("B", duration_before, duration_after, team_name=self.team_b)
         
         # self.highlight_points(duration_before, duration_after, build_input_video_filename)
         # self.highlight_all_points(duration_before, duration_after, build_input_video_filename)
@@ -485,19 +483,19 @@ class MatchVideo:
         
         filename = f'{self.root_name}_paniers_{team_name.lower().replace(" ", "_").replace("/", "_")}'
 
-        higlights(self.csv_folder, self.output_folder, self.output_folder, filename, team_points, duration_before, duration_after, build_input_video_filename)
+        higlights(self.csv_folder, self.output_folder, self.root_folder, filename, team_points, duration_before, duration_after, build_input_video_filename)
         
     def highlight_points(self, duration_before = 7, duration_after = 2, build_input_video_filename = lambda filename: filename):
         def points(event):
             return int(event.points) > 1
         
-        higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_tous", points, duration_before, duration_after, build_input_video_filename)
+        higlights(self.csv_folder, self.output_folder, self.root_folder, f"{self.root_name}_paniers_tous", points, duration_before, duration_after, build_input_video_filename)
         
     def highlight_all_points(self, duration_before = 7, duration_after = 2, build_input_video_filename = lambda filename: filename):
         def all_points(event):
             return int(event.points) > 0
         
-        higlights(self.csv_folder, self.output_folder, self.output_folder, f"{self.root_name}_paniers_tous_les_points", all_points, duration_before, duration_after, build_input_video_filename)
+        higlights(self.csv_folder, self.output_folder, self.root_folder, f"{self.root_name}_paniers_tous_les_points", all_points, duration_before, duration_after, build_input_video_filename)
         
     
     def display_by_quarter(self, match_parts):
@@ -535,7 +533,9 @@ class MatchVideo:
         return f"{score.team_a}-{score.team_b}"
     
     def final_score_before(self, first_file_exclude):
-        match_parts = MatchPart.concat_match_parts([MatchPart.build_from_csv(f"{file}") for file in files_before(f'{self.csv_folder}/*.csv', f"{self.csv_folder}/{first_file_exclude}")])        
+        csv_folder = self.csv_folder
+        # csv_folder = f"{self.root_folder}/auto_detect"
+        match_parts = MatchPart.concat_match_parts([MatchPart.build_from_csv(f"{file}") for file in files_before(f'{csv_folder}/*.csv', f"{csv_folder}/{first_file_exclude}")])        
         score = match_parts.final_score()
         return f"{score.team_a}-{score.team_b}"
     
@@ -578,7 +578,7 @@ class MatchVideo:
 def higlights_sequence(csv_folder, 
               video_folder, 
               output_folder, 
-              output_file, 
+              output_file_path, 
               filter, 
               duration_before = 7, 
               duration_after = 1,
@@ -614,7 +614,7 @@ def higlights_sequence(csv_folder,
         total_time = add_clip_parts(video_parts, f"{output_folder}/{input_video_filename(filename)}.mp4", clips, total_time)
             
     clip = mpy.CompositeVideoClip(clips)   
-    clip.write_videofile(f"{output_folder}/{output_file}.mp4", threads=8, preset="veryfast")
+    clip.write_videofile(f"{output_file_path}.mp4", threads=8, preset="veryfast")
 
 
 
@@ -670,16 +670,13 @@ def sequence(match):
     csv_folder=f"{match.root_folder}/sequence"
     files = EventRecord.files_sorted(f"{csv_folder}/*.csv")
         
-    build_filename = lambda filename: f"{filename}.output"
-    
     higlights_sequence(f"{match.root_folder}/sequence",
                     f"{match.root_folder}/video",
                     f"{match.root_folder}/output",
-                    "sequence",
+                    f"{match.root_folder}/sequence",
                     lambda event: True, 
                     0, 
-                    0,
-                    build_filename)
+                    0)
 
 def extract_clips(video_file, clip_times, time_in_final_video = 0):
     clip_list = []
