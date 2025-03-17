@@ -22,5 +22,7 @@ for ASS_FILE in $(ls $ASS_FOLDER/*.ass); do
     FILENAME=$(basename ${ASS_FILE%.ass})
     INPUT=$INPUT_FOLDER/$(basename $FILENAME).mp4
     OUTPUT=$OUTPUT_FOLDER/$FILENAME.mp4
-    ffmpeg -i $INPUT -vf "ass=$ASS_FILE" -c:a copy -c:v libx265 -crf 28 $OUTPUT
+    if [ ! -f $OUTPUT ]; then
+        ffmpeg -i $INPUT -vf "ass=$ASS_FILE" -c:a copy -c:v libx265 -crf 28 $OUTPUT
+    fi
 done

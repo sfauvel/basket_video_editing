@@ -2,6 +2,8 @@
 
 # Passer le répertoire d'un match et un fichier logo.
 # Le script va insérer le logo dans chaque vidéo et les placer dans un répertoire `logo`.
+# Si un fichier existe déjà, il ne sera pas écrasé.
+# Attention: si une vidéo a été construite partiellement, il faudra la supprimer pour la reconstruire.
 
 MATCH_FOLDER=$1
 LOGO=$2
@@ -22,6 +24,7 @@ for f in $(ls $MATCH_FOLDER/video/*.mp4); do
     INPUT=$f
     OUTPUT=$OUTPUT_FOLDER/$(basename $f)
     
+    if [ ! -f $OUTPUT ]; then
     # Original: 197 349 280
     # size: 58 182 952 time:  0m38,969s
     # ffmpeg -i $INPUT -i $LOGO  -filter_complex "[0:v][1:v] overlay=5:5" -crf 23 -preset veryfast -pix_fmt yuv420p -c:a copy $OUTPUT
@@ -37,5 +40,6 @@ for f in $(ls $MATCH_FOLDER/video/*.mp4); do
 
     # size: 26 986 302 time: 2m41,313s
     # 28, and it should visually correspond to libx264 video at CRF 23, but result in about half the file size.
-    ffmpeg -i $INPUT -i $LOGO -c:v libx265 -x265-params crf=28 -filter_complex "[0:v][1:v] overlay=5:5" $OUTPUT
+        ffmpeg -i $INPUT -i $LOGO -c:v libx265 -x265-params crf=28 -filter_complex "[0:v][1:v] overlay=5:5" $OUTPUT
+    fi
 done    
