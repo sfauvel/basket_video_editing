@@ -16,6 +16,17 @@ https://stackoverflow.com/questions/18444194/cutting-multimedia-files-based-on-s
 ffmpeg -i VID_20241005_160156.mp4 -ss 00:00:10 -t 00:00:15  -c copy cut.mp4 
 ----
 
+== Concat with fade
+
+https://stackoverflow.com/questions/41562467/ffmpeg-concatenate-3-videos-with-crossfade
+
+ffmpeg-concat 0.mp4 1.mp4 2.mp4 -o out.mp4
+ffmpeg -i 0.mp4 -i 1.mp4 -filter_complex "gltransition=duration=4:offset=1.5" out.mp4
+
+https://superuser.com/questions/1787540/ffmpeg-cut-fade-and-concat-causes-the-video-to-get-stuck
+
+https://dev.to/dak425/add-fade-in-and-fade-out-effects-with-ffmpeg-2bj7
+
 == Ajouter des sous-titrages à un fichier vidéo
 
 Vous pouvez également ajouter des sous-titrages à un fichier vidéo en utilisant FFmpeg. Téléchargez le fichier de sous-titrage correct pour votre vidéo et ajoutez-le comme indiqué ci-dessous.
