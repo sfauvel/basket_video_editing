@@ -166,3 +166,9 @@ ScriptType: v4.00+"""
             str(Event(end=self.duration_in_seconds, style="Quarter", text=str(self.quarter), layer=2)),
         ])
     
+    def generate(self, events):
+        return "\n\n".join([
+            self.header(),
+            self.style(),
+            self.events(events)
+        ])

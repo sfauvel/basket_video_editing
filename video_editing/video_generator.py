@@ -220,12 +220,7 @@ def generate_ass(filename, csv_folder, video_folder, output_folder, team_a, team
         states = match_part.states(duration)
         score = match_part.final_score()
 
-        ass_generator = AssGenerator(duration, team_a, team_b, states[-1].quarter_time)
-        ass_file_content = ass_generator.header()
-        ass_file_content += "\n\n"
-        ass_file_content += ass_generator.style()
-        ass_file_content += "\n\n"
-        ass_file_content += ass_generator.events(generate_events(states))
+        ass_file_content = AssGenerator(duration, team_a, team_b, states[-1].quarter_time).generate(generate_events(states))
     
         os.makedirs(output_folder, exist_ok=True)
         output_file=f"{output_folder}/{filename}.ass"
