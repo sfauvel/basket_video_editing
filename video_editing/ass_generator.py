@@ -159,8 +159,7 @@ ScriptType: v4.00+"""
         events_str = "\n".join([str(event) for event in events])
         return "\n".join([
             Event.header(),
-            events_str,
-            "",
+            events_str + "\n" if len(events) > 0 else "",
             str(Event(end=self.duration_in_seconds, style="Score", text="-")),
             str(Event(end=self.duration_in_seconds, style="TeamA", text=self.team_local)),
             str(Event(end=self.duration_in_seconds, style="TeamB", text=self.team_visitor)),

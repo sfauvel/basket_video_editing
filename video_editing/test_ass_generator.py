@@ -1,7 +1,7 @@
 from doc_as_test_pytest import DocAsTest, doc, doc_module
 
 from game_info import GameInfo
-from ass_generator import AssGenerator
+from ass_generator import AssGenerator, Event
 
 class TestAss:
     """
@@ -41,6 +41,33 @@ class TestAss:
             "",
             "----",
             ass.events([]),
+            "----",]))
+        
+    def test_event_section_with_events(self, doc): 
+        duration_in_seconds=120
+        team_local="SLB"
+        team_visitor="NBH"
+        quarter=2
+        ass = AssGenerator(duration_in_seconds, team_local, team_visitor, quarter)
+
+        events = [
+            Event("ScoreA", layer=3, text=str(5), start=10, end=20),
+            Event("ScoreB", layer=3, text=str(2), start=8, end=100),
+        ]
+        
+        doc.write("\n".join([
+            "We generate an event section with following events:",
+            "",
+            "|====",
+            "| Style | Layer | Text | Start | End",
+            "",
+            "\n".join([f"| {e.style} | {e.layer} | {e.text} | {e.start} | {e.end}" for e in events]),
+            "|====",
+            "",
+            "The `Events` section generate is:",
+            "",
+            "----",
+            ass.events(events),
             "----",]))
 
 #         
