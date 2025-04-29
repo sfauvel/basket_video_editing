@@ -8,7 +8,7 @@ MATCH_FOLDER=$1
 
 function usage() {
     echo "Usage: $0 <match_folder>"
-    echo "  match_folder: répertoire contenant les vidéos"
+    echo "  match_folder: répertoire racine du match"
 }
 
 if [ -z $MATCH_FOLDER ]; then usage; exit 1; fi

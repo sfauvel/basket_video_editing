@@ -10,7 +10,7 @@ LOGO=$2
 
 function usage() {
     echo "Usage: $0 <match_folder> <logo>"
-    echo "  match_folder: répertoire contenant les vidéos"
+    echo "  match_folder: répertoire racine du match"
     echo "  logo: fichier image à insérer"
 }
 
@@ -40,6 +40,6 @@ for f in $(ls $MATCH_FOLDER/video/*.mp4); do
 
     # size: 26 986 302 time: 2m41,313s
     # 28, and it should visually correspond to libx264 video at CRF 23, but result in about half the file size.
-        ffmpeg -i $INPUT -i $LOGO -c:v libx265 -x265-params crf=28 -filter_complex "[0:v][1:v] overlay=5:5" $OUTPUT
+        ffmpeg -i $INPUT -i $LOGO -c:v libx265 -x265-params crf=28 -filter_complex "[0:v][1:v] overlay=5:5" -r 30 $OUTPUT
     fi
 done    
