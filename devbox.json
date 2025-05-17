@@ -1,12 +1,17 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.0/.schema/devbox.schema.json",
   "packages": [
+    "gtk2@latest",
+    "vlc@3.0.16",
+    "libgl@latest",
+    "ffmpeg@latest",
     "python@3.13",
     "python313Packages.pip@latest",
     "python313Packages.python-vlc@latest",
     "python313Packages.tkinter@latest",
     "python313Packages.python-vlc@latest",
-    "vlc@latest",
+    "python313Packages.opencv4@latest",
+    "gtk2-x11@2.24.33",
   ],
   "shell": {
     "init_hook": [
