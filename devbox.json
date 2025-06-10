@@ -4,6 +4,7 @@
     "vlc@3.0.16",
     "python@3.13",
     "python313Packages.pip@latest",
+    "python313Packages.python-vlc@latest",
     "python313Packages.tkinter@latest",
   ],
   "shell": {
