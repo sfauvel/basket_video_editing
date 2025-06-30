@@ -1,19 +1,10 @@
-import os
-import shutil
-import unittest
-
 from video_recorder import *
 from video_match import *
 from video_utils import *
 from video_generator import collapse_overlaps
 
-class Folder:
-    def recreate(folder):
-        if os.path.exists(folder):
-            shutil.rmtree(folder)
-        os.makedirs(folder, exist_ok=True)
 
-class TestEventRecord(unittest.TestCase):
+class TestEventRecord():
     
     def test_event_record_to_csv(self):
         assert "3;A;0:00:12;2" == EventRecord(3, "A", 12, 2).to_csv()
@@ -52,40 +43,34 @@ class TestEventRecord(unittest.TestCase):
         record = EventRecord.from_csv("3;A;0:04:25;2")
         assert 4*60+25 == record.time_in_seconds
         
-    def test_event_record_validation_ok(self):
-        Folder.recreate("tmp")
-        
-        with (open("tmp/tmp1.csv", "w")) as csv_file:
+    def test_event_record_validation_ok(self, tmp_path):
+        with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([
                 "0;-;0:00;4",
                 "2;A;0:25;4",
                 "0;-;1:00;4",
                 ]))
             
-        (result, valid) = EventRecord.validate("tmp")
+        (result, valid) = EventRecord.validate(tmp_path)
         assert valid == True
         assert "tmp1.csv: Ok" in result, result
         
-    def test_event_record_invalid(self):
-        Folder.recreate("tmp")
-        
-        with (open("tmp/tmp1.csv", "w")) as csv_file:
+    def test_event_record_invalid(self, tmp_path):
+        with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([
                 "0;-;0:00;4",
                 "2;A;25;4",
                 "0;-;1:00;4",
                 ]))
             
-        (result, valid) = EventRecord.validate("tmp")
+        (result, valid) = EventRecord.validate(tmp_path)
         assert valid ==False
         assert "tmp1.csv: Invalid" in result, result
         assert "- Line 2: 2;A;25;4" in result, result
         
         
-    def test_event_record_show_all_invalid_lines(self):
-        Folder.recreate("tmp")
-        
-        with (open("tmp/tmp1.csv", "w")) as csv_file:
+    def test_event_record_show_all_invalid_lines(self, tmp_path):
+        with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([
                 "0;-;0:00;4",
                 "2;A;25;4",
@@ -93,14 +78,14 @@ class TestEventRecord(unittest.TestCase):
                 "2;A;56;4",
                 "0;-;1:00;4",
                 ]))
-        with (open("tmp/tmp2.csv", "w")) as csv_file:
+        with (open(f"{tmp_path}/tmp2.csv", "w")) as csv_file:
             csv_file.write("\n".join([
                 "0;-;0:00;4",
                 "2;B;12;4",
                 "0;-;1:00;4",
                 ]))
             
-        (result, valid) = EventRecord.validate("tmp")
+        (result, valid) = EventRecord.validate(tmp_path)
         assert valid ==False
         assert "tmp1.csv: Invalid" in result, result
         assert "- Line 2: 2;A;25;4" in result, result
@@ -108,10 +93,8 @@ class TestEventRecord(unittest.TestCase):
         assert "tmp2.csv: Invalid" in result, result
         assert "- Line 2: 2;B;12;4" in result, result
         
-    def test_event_record_when_time_is_not_well_ordered(self):
-        Folder.recreate("tmp")
-        
-        with (open("tmp/tmp1.csv", "w")) as csv_file:
+    def test_event_record_when_time_is_not_well_ordered(self, tmp_path):
+        with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([
                 "0;-;0:00;4",
                 "2;A;1:25;4",
@@ -119,20 +102,19 @@ class TestEventRecord(unittest.TestCase):
                 "0;-;1:00;4",
                 ]))
             
-        (result, valid) = EventRecord.validate("tmp")
+        (result, valid) = EventRecord.validate(tmp_path)
         assert valid ==False
         assert "tmp1.csv: Invalid" in result, result
         assert "- Line 3: 2;B;1:10;4 -- Time should not be less than 0:01:10" in result, result
   
-class TestVideoGenerator(unittest.TestCase):
+class TestVideoGenerator():
 
-    def test_build_match_part_from_csv(self):
-        Folder.recreate("tmp")
+    def test_build_match_part_from_csv(self, tmp_path):
         events = [EventRecord(2,"A",5),EventRecord(1,"B",6),EventRecord(3,"A",7),EventRecord(0,"X",9)]
-        with (open("tmp/tmp1.csv", "w")) as csv_file:
+        with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([e.to_csv() for e in events]))
             
-        match_part = MatchPart.build_from_csv("tmp/tmp1.csv")
+        match_part = MatchPart.build_from_csv(f"{tmp_path}/tmp1.csv")
                 
         states = match_part.states()
         
@@ -147,14 +129,13 @@ class TestVideoGenerator(unittest.TestCase):
         assert states[1].score.team_b == 0
         
     
-    def test_build_match_part_from_csv_with_initial_score(self):
-        Folder.recreate("tmp")
+    def test_build_match_part_from_csv_with_initial_score(self, tmp_path):
         events = [EventRecord(2,"A",5),EventRecord(1,"B",6),EventRecord(3,"A",7),EventRecord(0,"X",9)]
-        with (open("tmp/tmp1.csv", "w")) as csv_file:
+        with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([e.to_csv() for e in events]))
             print("\n".join([e.to_csv() for e in events]))
             
-        match_part = MatchPart.build_from_csv("tmp/tmp1.csv", Score(5,3))
+        match_part = MatchPart.build_from_csv(f"{tmp_path}/tmp1.csv", Score(5,3))
                 
         states = match_part.states()
         
@@ -169,10 +150,9 @@ class TestVideoGenerator(unittest.TestCase):
         assert states[1].score.team_b == 3
 
 
-    def test_build_match_part_from_csv_with_empty_lines(self):
-        Folder.recreate("tmp")
+    def test_build_match_part_from_csv_with_empty_lines(self, tmp_path):
         events = [EventRecord(2,"A",5),EventRecord(1,"B",6),EventRecord(3,"A",7),EventRecord(0,"X",9)]
-        with (open("tmp/tmp1.csv", "w")) as csv_file:
+        with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n")
             csv_file.write("\n\n\n".join([e.to_csv() for e in events]))
             csv_file.write("\n")
@@ -180,7 +160,7 @@ class TestVideoGenerator(unittest.TestCase):
 
             print("\n".join([e.to_csv() for e in events]))
             
-        match_part = MatchPart.build_from_csv("tmp/tmp1.csv", Score(5,3))
+        match_part = MatchPart.build_from_csv(f"{tmp_path}/tmp1.csv", Score(5,3))
                 
         states = match_part.states()
         

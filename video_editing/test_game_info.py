@@ -7,14 +7,13 @@ class TestGameInfo:
     Information of the game is retrieve from the file.
     """
     
-    def test_extract_info_from_file(self, doc): 
+    def test_extract_info_from_file(self, doc, tmp_path): 
 
         file_content = """Date: 22/02/2025
 Locaux: Paris
 Visiteurs: Cholet
 """
-        
-        filepath = f"tmp/{GameInfo.FILENAME}"
+        filepath = f"{tmp_path}/{GameInfo.FILENAME}"
         with open(filepath, "w") as file:
             file.write(file_content)
 
