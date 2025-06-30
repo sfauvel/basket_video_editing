@@ -1,6 +1,7 @@
 = Doc reader
 
 
-Le `reader` permet lire une vidéo et de noter les moments importants (paniers, sequences, ...).
+Le `reader` est un lecteur de vidéo permettant d'enregistrer les moments importants.
+Il est spécialisé dans les matchs de basket avec une interface simple pour enregistrer les paniers par équipe.
 
 

@@ -1,13 +1,14 @@
 from pathlib import Path
 import subprocess
 
-from doc_as_test_pytest import DocAsTest, doc, doc_module
+from doc_as_test_pytest import doc, doc_module
 
 from reader import *
 
 class TestDocReader:
     """
-    Le `reader` permet lire une vidéo et de noter les moments importants (paniers, sequences, ...).
+    Le `reader` est un lecteur de vidéo permettant d'enregistrer les moments importants.
+    Il est spécialisé dans les matchs de basket avec une interface simple pour enregistrer les paniers par équipe.
     """
     
     def test_utilisation(self, doc):
