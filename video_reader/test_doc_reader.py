@@ -1,3 +1,4 @@
+from pathlib import Path
 import subprocess
 
 from doc_as_test_pytest import DocAsTest, doc, doc_module
@@ -10,8 +11,8 @@ class TestDocReader:
     """
     
     def test_utilisation(self, doc):
-        
-        result = subprocess.run(['python3', 'reader.py', '--help'], capture_output=True, text=True)
+        current_path=Path(__file__).parent        
+        result = subprocess.run(['python3', f'{current_path}/reader.py', '--help'], capture_output=True, text=True)
         
         output = result.stdout
         
