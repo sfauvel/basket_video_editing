@@ -12,12 +12,21 @@
     "python313Packages.python-vlc@latest",
     "python313Packages.opencv4@latest",
     "gtk2-x11@2.24.33",
-  ],
+  ],  
+  "env": {
+    "TOOLPATH": "$PWD",
+    "GENERATOR": "$PWD/video_editing/video_generator.py",
+    "EDITOR": "$PWD/video_reader/reader.py"
+  },
   "shell": {
     "init_hook": [
       ". $VENV_DIR/bin/activate",
       "pip install -r requirements.txt",
-      "PYTHONPATH=$PYTHONPATH:$(realpath libs)",
+      "PYTHONPATH=$PYTHONPATH:$(realpath libs)",     
     ],
-  },
+    "scripts": {
+      "opencv": "python check_opencv.py"
+    }
+  }
+  
 }
