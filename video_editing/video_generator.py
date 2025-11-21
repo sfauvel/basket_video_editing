@@ -4,8 +4,8 @@ import os
 import re
 import sys
 
-import moviepy.editor as mpy
-from moviepy.video import fx
+import moviepy as mpy
+import moviepy.video.fx as fx 
 
 from game_info import GameInfo
 from ass_generator import AssGenerator, Event
@@ -107,7 +107,7 @@ def generate_score_clips(states, team_a, team_b, size):
             clips.append(set_shadow_position(quarter_clip, create_text_clip(str(state.quarter_time), font_size=20, color=SHADOW_COLOR), 2))
             clips.append(quarter_clip)
             
-        all_clips += [clip.set_start(state.start).set_end(state.end) for clip in clips]
+        all_clips += [clip.with_start(state.start).with_end(state.end) for clip in clips]
     
     return all_clips
 
@@ -255,6 +255,26 @@ def concat_file(folder, files, output_filepath="full.mp4"):
     # printf "file '%s'\n" *.mp4 > list.txt
     # ffmpeg -f concat -i list.txt -c copy outfile.mp4
 
+def insert_score(ass_folder, video_folder, output_folder): 
+    
+    os.makedirs(output_folder, exist_ok=True)
+
+    for file in files_sorted(f'{ass_folder}/*.ass'):
+        filename=re.sub(r"\.ass$", "", os.path.basename(file))
+        print(filename)
+        prog = f'ffmpeg -i {video_folder}/{filename}.mp4 -vf "ass={ass_folder}/{filename}.ass" -c:a copy -c:v libx265 -crf 28 {output_folder}/{filename}.mp4'
+        print(prog)
+        os.system(prog)
+        
+    # print(files)
+    # with open(f"{folder}/file_list.txt", "w") as file_list_file:
+        # file_list_file.write("\n".join([f"file '{filename}'" for filename in files]))
+#   
+    # print(f"Output: {output_filepath}")
+    # prog = f'ffmpeg -f concat -i {folder}/file_list.txt -c copy {output_filepath}'
+    # print(prog)
+    # os.system(prog)
+    
 
 # preset values: ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow,
 def compress(clip_filename, output_file="compress.mp4", preset="veryfast"):
@@ -317,9 +337,9 @@ def add_clip_parts(video_parts,
         print(f"    Extract from {start_subclip}s to {end_subclip}s")
         print(f"    Start from {start_in_final_clip}s")
         
-        clip = original_clip.subclip(start_subclip, end_subclip).set_start(start_in_final_clip)
-        clip=fx.all.fadeout(clip, padding, final_color=fade_color)
-        clip=fx.all.fadein(clip, padding, initial_color=fade_color)
+        clip = original_clip.subclipped(start_subclip, end_subclip).with_start(start_in_final_clip)
+        clip=fx.FadeOut(padding, final_color=fade_color).apply(clip)
+        clip=fx.FadeIn(padding, initial_color=fade_color).apply(clip)
         clips.append(clip)
         
         start_in_final_clip += (end_subclip-start_subclip)
@@ -350,6 +370,7 @@ def higlights(csv_folder,
         
     clip = mpy.CompositeVideoClip(clips)   
     clip.write_videofile(f"{output_folder}/{output_file}.mp4", threads=8, preset="veryfast")
+    #clip.close()
 
 class MatchVideo:
     def __init__(self, root_folder, team_a="LOCAUX", team_b="VISITEUR"):
@@ -402,6 +423,10 @@ class MatchVideo:
             team_b=self.team_b,
         )
         
+
+    def insert_score(self):
+        insert_score(self.ass_folder, f"{self.root_folder}/logo", self.output_folder)
+
     def extract(self, input_data):
         higlights("Match_2024_03_17/extract", 
                     "Match_2024_03_17/output", 
@@ -610,7 +635,7 @@ def higlights_sequence(csv_folder,
             
     clip = mpy.CompositeVideoClip(clips)   
     clip.write_videofile(f"{output_file_path}.mp4", threads=8, preset="veryfast")
-
+    clip.close()
 
 
 def higlights_demo():
@@ -678,7 +703,7 @@ def extract_clips(video_file, clip_times, time_in_final_video = 0):
 
     for time in clip_times:
         video = mpy.VideoFileClip(video_file) 
-        clip = video.subclip(time[0], time[1]).set_start(time_in_final_video)
+        clip = video.subclipped(time[0], time[1]).with_start(time_in_final_video)
         clip_list.append(clip)        
         time_in_final_video += clip.duration
     return clip_list
@@ -746,8 +771,16 @@ if __name__ == "__main__":
         match.create_single_video()
         sequence(match)
         
+    elif args[1] == "xxx":
+        match.generate()
+        match.insert_score()
+        match.highlight()
+        match.create_single_video()
+        sequence(match)
+
     elif args[1] == "sequence":
         sequence(match)
+        
     else:
         print(f"Unrecognized command `{args[1]}`")
         
