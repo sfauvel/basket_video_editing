@@ -1,7 +1,9 @@
+import os 
 from pathlib import Path
+from subprocess import CompletedProcess
 import subprocess
 
-from doc_as_test_pytest import doc, doc_module
+from doc_as_test_pytest import DocAsTest, doc, doc_module
 
 from reader import *
 
@@ -11,9 +13,9 @@ class TestDocReader:
     Il est spécialisé dans les matchs de basket avec une interface simple pour enregistrer les paniers par équipe.
     """
     
-    def test_utilisation(self, doc):
+    def test_utilisation(self, doc: DocAsTest):
         current_path=Path(__file__).parent        
-        result = subprocess.run(['python3', f'{current_path}/reader.py', '--help'], capture_output=True, text=True)
+        result: CompletedProcess  = subprocess.run(['python3', f'{current_path}/reader.py', '--help'], capture_output=True, text=True)
         
         output = result.stdout
         

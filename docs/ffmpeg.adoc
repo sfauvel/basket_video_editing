@@ -114,3 +114,6 @@ ffmpeg -i song.wav -c:a pcm_s16le -af "bandreject=f=900:width_type=h:w=600, band
 
 https://steemit.com/audio/@manero666/ffmpeg-apply-a-filter-to-enhance-voice-by-removing-low-and-high-frequency-noises
 ffmpeg -i MatchX/video/VID_20241005_164132.mp4 -af lowpass=3000,highpass=200 MatchX/output/out.mp4
+
+
+https://constructor6.medium.com/quickly-generating-high-quality-scientific-videos-with-python-1c87ff916825

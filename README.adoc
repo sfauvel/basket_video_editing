@@ -24,6 +24,11 @@ curl -fsSL https://get.jetify.com/devbox | bash
 
 NOTE: Il peut-être nécessaire de lancer `python` avec un `sudo` car les librairies paratgées peuvent ne pas être accessibles sous `devbox`.
 
+Problème sur imshow avec opencv
+---- 
+sudp apt-get install libopencv-dev
+----
+
 === Installation manuelle
 
 Voici les prérequies, si vous souhaitez faire une installation sur votre environnement:
@@ -98,13 +103,14 @@ python3 video_generator.py [COMMAND] [MATCH FOLDER]
 - En construction...
 
 .Repérage
-- Construire les fichiers `CSV` en exécutant la commande `python3 $TOOLPATH/video_reader/reader.py -s $(python3 ../video_generator.py final_score . | tail -1) -v video/[NOM VIDEO].mp4` sur chaque fichier video
+- Construire les fichiers `CSV` en exécutant la commande `python3 $TOOLPATH/video_reader/reader.py -s $(python3 ../video_generator.py final_score . | tail -1) --video video/[NOM VIDEO].mp4` sur chaque fichier video
+`python $TOOLPATH/video_reader/reader.py -s $(python ../video_generator.py final_score . | tail -1) --video video/[NOM VIDEO].mp4` 
 - Modifier le nom des équipes dans le fichier `video_generator.py` au début du `main`.
 - Vérifier le score: `python3 ../video_generator.py score .`
 
 .Génération
-- Générer les fichiers .ass : `python3 ../video_generator.py generate .`
-- Construire les vidéo avec incrustation du score avec le script `. ../insert_score.sh .`
+- Générer les fichiers .ass : `python $TOOLPATH/video_editing/video_generator.py generate .`
+- Construire les vidéo avec incrustation du score avec le script `$TOOLPATH/script/insert_score.sh .`
 - Générer les highlights: `python3 ../video_generator.py highlight .`
 - Générer la vidéo du match: `python3 ../video_generator.py all .`
 - Compresser les vidéos: ffmpeg -i [VIDEO ENTREE].mp4 -c:v libx265 -x265-params crf=25 [VIDEO SORTIE].mp4
