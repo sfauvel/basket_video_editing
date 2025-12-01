@@ -1,0 +1,14 @@
+= Files before
+
+When creating, in folder `tmp`, those files in this order: `tmp3.csv`, `tmp1.csv`, `tmp2.csv`, `tmp4.txt`
+We can find files before another file according to there name.
+
+.files_sorted
+|====
+| file input | file before
+
+| tmp/tmp1.csv | 
+| tmp/tmp2.csv | tmp/tmp1.csv
+| tmp/tmp3.csv | tmp/tmp1.csv, tmp/tmp2.csv
+| tmp/tmp4.txt | tmp/tmp1.csv, tmp/tmp2.csv, tmp/tmp3.csv
+|====

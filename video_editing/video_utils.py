@@ -36,3 +36,8 @@ def files_sorted(pattern):
     files = glob.glob(pattern)
     files.sort()
     return files 
+
+def files_before(pattern, first_file_exclude):
+    files = glob.glob(pattern)
+    files.sort()
+    return [file for file in files if file < first_file_exclude] 

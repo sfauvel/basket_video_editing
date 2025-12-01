@@ -111,12 +111,6 @@ def generate_score_clips(states, team_a, team_b, size):
     
     return all_clips
 
-# TODO move to video_utils
-def files_before(pattern, first_file_exclude):
-    files = glob.glob(pattern)
-    files.sort()
-    return [file for file in files if file < first_file_exclude] 
-
 def generate_from_dir(csv_folder, video_folder, output_folder, team_a, team_b):
     score=Score(0,0)
     for file in files_sorted(f'{video_folder}/*.mp4'):

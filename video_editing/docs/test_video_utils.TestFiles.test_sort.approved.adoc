@@ -1,6 +1,6 @@
 = Sort
 
-When creating, in folder `tmp`, those files in this order: tmp3.csv, tmp1.csv, tmp2.csv, tmp4.txt
+When creating, in folder `tmp`, those files in this order: `tmp3.csv`, `tmp1.csv`, `tmp2.csv`, `tmp4.txt`
 
 .files_sorted
 |====

@@ -65,7 +65,7 @@ class TestFiles:
 
         patterns = ["tmp/*", "tmp/*.csv", "tmp/*.txt"]
         doc.write("\n".join([
-            f"When creating, in folder `{folder}`, those files in this order: " + ", ".join(files),
+            f"When creating, in folder `{folder}`, those files in this order: " + ", ".join([f"`{f}`" for f in files]),
             "",
             ".files_sorted",
             "|====",
@@ -77,3 +77,30 @@ class TestFiles:
             "|===="
         ]))
 
+    def test_files_before(self, doc):
+        folder = "tmp"
+        Folder.recreate(folder)
+        files = ["tmp3.csv", "tmp1.csv", "tmp2.csv", "tmp4.txt"]
+
+        for file in files:
+            open(f"tmp/{file}", 'a').close()
+        
+
+        patterns = ["tmp/*", "tmp/*.csv", "tmp/*.txt"]
+
+        files_xx = [f"tmp/{f}" for f in files]
+        files_xx.sort()
+        doc.write("\n".join([
+            f"When creating, in folder `{folder}`, those files in this order: " + ", ".join([f"`{f}`" for f in files]),
+            "We can find files before another file according to there name."
+            "",
+            "",
+            ".files_sorted",
+            "|====",
+            "| file input | file before",
+            "",
+        
+            "\n".join([f"| {f} | " + ", ".join(video_utils.files_before("tmp/*.csv", f)) for f in files_xx]),
+        
+            "|===="
+        ]))
