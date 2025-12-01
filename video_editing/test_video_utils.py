@@ -1,6 +1,6 @@
 from doc_as_test_pytest import DocAsTest, doc, doc_module
 
-from video_utils import *
+import video_utils
 
 class TestTimeMapping:
     """
@@ -14,7 +14,7 @@ class TestTimeMapping:
         
         def text_time_to_seconds(time):
             try:
-                seconds = time_to_seconds(time)
+                seconds = video_utils.time_to_seconds(time)
                 return f"- {time} -> {seconds}s"
             except Exception as e:
                 return f"- {time} -> Exception: {e}"
@@ -37,7 +37,7 @@ class TestTimeMapping:
         """
         
         def text_seconds_to_time(seconds):
-            time = seconds_to_time(seconds)
+            time = video_utils.seconds_to_time(seconds)
             return f"- {seconds}s -> {time}"
 
         doc.write(' +\n'.join([
@@ -45,3 +45,35 @@ class TestTimeMapping:
             text_seconds_to_time(4*60+25),
             text_seconds_to_time(1*3600+14*60+25),
         ]))
+import os
+import shutil
+class Folder:
+    def recreate(folder):
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+        os.makedirs(folder, exist_ok=True)
+
+class TestFiles:
+    def test_sort(self, doc):
+        folder = "tmp"
+        Folder.recreate(folder)
+        files = ["tmp3.csv", "tmp1.csv", "tmp2.csv", "tmp4.txt"]
+
+        for file in files:
+            open(f"tmp/{file}", 'a').close()
+        
+
+        patterns = ["tmp/*", "tmp/*.csv", "tmp/*.txt"]
+        doc.write("\n".join([
+            f"When creating, in folder `{folder}`, those files in this order: " + ", ".join(files),
+            "",
+            ".files_sorted",
+            "|====",
+            "| pattern | result",
+            "",
+        
+            "\n".join([f"| {p} | " + ", ".join(video_utils.files_sorted(p)) for p in patterns]),
+        
+            "|===="
+        ]))
+

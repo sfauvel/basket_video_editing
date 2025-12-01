@@ -1,5 +1,6 @@
 # Some utility functions to manipulate data.
 
+import glob
 import re
 
 def time_to_seconds(time):
@@ -30,3 +31,8 @@ def seconds_to_time(time_in_seconds):
     time_in_seconds -= minutes * 60
     seconds = time_in_seconds
     return f"{hour:01d}:{minutes:02d}:{seconds:02d}"
+
+def files_sorted(pattern):
+    files = glob.glob(pattern)
+    files.sort()
+    return files 

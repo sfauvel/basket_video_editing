@@ -486,6 +486,34 @@ class TestVideoGenerator():
             "0:00:10 (+1)  3              ",
         ]), "\n"+str(game_sheet)
         
+        
+    def test_build_hightlights(self):
+        Folder.recreate("tmp")
+        with (open("tmp/tmp2.csv", "w")) as csv_file:
+            csv_file.write("\n".join([
+                "0;-;0:00;4",
+                "1;A;0:15;4",
+                "3;B;0:35;4",
+                "3;A;0:40;4",
+                "0;-;2:00;4",
+                ]))
+        with (open("tmp/tmp1.csv", "w")) as csv_file:
+            csv_file.write("\n".join([
+                "0;-;0:00;3",
+                "2;A;0:25;3",
+                "0;-;1:00;3",
+                ]))
+            
+        parts = MatchPart.build_from_csv_folder("tmp", lambda e: e.team == "A")
+        print(parts)
+        assert parts == [
+            ("tmp/tmp1.csv", [EventRecord.from_csv("2;A;0:25;3")]),
+            ("tmp/tmp2.csv", [EventRecord.from_csv("1;A;0:15;4"),EventRecord.from_csv("3;A;0:40;4")]),
+        ]
+
+
+
+
     def test_build_match_display(self):
         match_events = EventFile().extract_match_events([
             "2;A;0:03;2",
@@ -519,6 +547,5 @@ class TestVideoGenerator():
         assert Score(2,4) != Score(2,1) 
         assert Score(5,1) != Score(2,1) 
          
-        
 if __name__ == "__main__":
     unittest.main()

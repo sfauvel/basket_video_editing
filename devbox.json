@@ -16,7 +16,8 @@
   "env": {
     "TOOLPATH": "$PWD",
     "GENERATOR": "$PWD/video_editing/video_generator.py",
-    "EDITOR": "$PWD/video_reader/reader.py"
+    "EDITOR": "$PWD/video_reader/reader.py",
+    "FULL": "eval python $PWD/video_editing/video_generator.py sequence_dry . && (python $PWD/video_editing/video_generator.py generate .;$PWD/script/insert_score.sh .;python $PWD/video_editing/video_generator.py highlightA .;python $PWD/video_editing/video_generator.py highlightB .;python $PWD/video_editing/video_generator.py single .;python $PWD/video_editing/video_generator.py sequence .)"
   },
   "shell": {
     "init_hook": [

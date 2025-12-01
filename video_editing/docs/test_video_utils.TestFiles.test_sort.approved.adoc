@@ -1,0 +1,12 @@
+= Sort
+
+When creating, in folder `tmp`, those files in this order: tmp3.csv, tmp1.csv, tmp2.csv, tmp4.txt
+
+.files_sorted
+|====
+| pattern | result
+
+| tmp/* | tmp/tmp1.csv, tmp/tmp2.csv, tmp/tmp3.csv, tmp/tmp4.txt
+| tmp/*.csv | tmp/tmp1.csv, tmp/tmp2.csv, tmp/tmp3.csv
+| tmp/*.txt | tmp/tmp4.txt
+|====

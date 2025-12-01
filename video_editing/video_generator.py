@@ -111,12 +111,7 @@ def generate_score_clips(states, team_a, team_b, size):
     
     return all_clips
 
-def files_sorted(pattern):
-    files = glob.glob(pattern)
-    files.sort()
-    return files 
-
-
+# TODO move to video_utils
 def files_before(pattern, first_file_exclude):
     files = glob.glob(pattern)
     files.sort()
@@ -319,7 +314,9 @@ def create_highights_clip(highlights,
         duration_before = 7,
         duration_after = 1):
     
-    original_clip_duration = mpy.VideoFileClip(filename).duration
+    clip = mpy.VideoFileClip(filename)
+    original_clip_duration = clip.duration
+    clip.close()
     video_parts = [(start_subclip, min(original_clip_duration, end_subclip)) for (start_subclip, end_subclip) in collapse_overlaps(highlights, duration_before, duration_after)]
     return add_clip_parts(video_parts, filename, clips, start_in_final_clip)
     
@@ -332,8 +329,8 @@ def add_clip_parts(video_parts,
     fade_color=(30,30,30)
     print(f"Filename: {filename}")
 
+    original_clip = mpy.VideoFileClip(filename) 
     for (start_subclip, end_subclip) in video_parts:
-        original_clip = mpy.VideoFileClip(filename) 
         print(f"    Extract from {start_subclip}s to {end_subclip}s")
         print(f"    Start from {start_in_final_clip}s")
         
@@ -356,21 +353,33 @@ def higlights(csv_folder,
               duration_after = 1,
               input_video_filename = lambda filename: filename,
               csv_filter = "*"):
+    more_time_at_the_end = 2
+
     clips = []
-    
     total_time = 0
-    for file in files_sorted(f'{csv_folder}/{csv_filter}.csv'):
-        print(file)
-        
-        filename=os.path.basename(file).replace(".csv", "")
-                   
-        match = MatchPart.build_from_csv(f"{csv_folder}/{filename}.csv")
-        highlights = [event for event in match.events if filter(event)]
-        total_time = create_highights_clip(highlights, f"{video_folder}/{input_video_filename(filename)}.mp4", clips, total_time, duration_before, duration_after)
-        
+
+    match_events=highlights_parts(csv_folder, filter, csv_filter, duration_before, duration_after, more_time_at_the_end)
+    for (filepath, highlights) in match_events:
+        print((filepath, highlights))
+
+        filename=os.path.basename(filepath).replace(".csv", "")
+        video_file=f"{video_folder}/{input_video_filename(filename)}.mp4"
+        original_clip_duration = mpy.VideoFileClip(video_file).duration
+        video_parts = [(start_subclip, min(original_clip_duration, end_subclip)) for (start_subclip, end_subclip) in highlights]
+        total_time = add_clip_parts(video_parts, video_file, clips, total_time)
+ 
+
     clip = mpy.CompositeVideoClip(clips)   
     clip.write_videofile(f"{output_folder}/{output_file}.mp4", threads=8, preset="veryfast")
-    #clip.close()
+    ##clip.close()
+
+def highlights_parts(csv_folder, filter, csv_filter, duration_before, duration_after, more_time_at_the_end):
+    match_events_tmp = MatchPart.build_from_csv_folder(csv_folder, filter, csv_filter)
+    match_events = [(filename, collapse_overlaps(highlights, duration_before, duration_after)) for (filename, highlights) in match_events_tmp]
+    
+    last_file_hightlights = match_events[-1][1]
+    last_file_hightlights[-1] = (last_file_hightlights[-1][0],  last_file_hightlights[-1][1]+more_time_at_the_end)
+    return match_events        
 
 class MatchVideo:
     def __init__(self, root_folder, team_a="LOCAUX", team_b="VISITEUR"):
@@ -381,6 +390,7 @@ class MatchVideo:
         self.video_folder = f"{self.root_folder}/video"
         self.output_folder = f"{self.root_folder}/output"
         self.ass_folder = f"{self.root_folder}/ass"
+        self.with_logo_folder = f"{self.root_folder}/logo"
         self.team_a = team_a
         self.team_b = team_b
         
@@ -416,8 +426,8 @@ class MatchVideo:
         
     def generate(self):
         generate_from_dir(
-            csv_folder=self.csv_folder, 
-            video_folder=self.video_folder, 
+            csv_folder=self.csv_folder,  
+            video_folder=self.with_logo_folder,
             output_folder=self.ass_folder,
             team_a=self.team_a, 
             team_b=self.team_b,
@@ -425,7 +435,7 @@ class MatchVideo:
         
 
     def insert_score(self):
-        insert_score(self.ass_folder, f"{self.root_folder}/logo", self.output_folder)
+        insert_score(self.ass_folder, self.with_logo_folder, self.output_folder)
 
     def extract(self, input_data):
         higlights("Match_2024_03_17/extract", 
@@ -480,6 +490,24 @@ class MatchVideo:
                 print(f"Csv file '{csv_file}' does not exists")
                 
         return all_files
+
+    def highlightA(self): 
+        self.highlight_team_points("A", team_name=self.team_a)
+        
+    def highlightB(self):         
+        self.highlight_team_points("B", team_name=self.team_b)
+    
+    # Build video with all moment with some points. 
+    # TODO it could be better to keep all moment with team 'X' and have this option in video editor.
+    def highlight_match(self):
+        def team_points(event):
+            return int(event.points) > 0
+        
+        filename = f'{self.root_name}_highlights'
+
+        duration_before = 7 
+        duration_after = 4
+        higlights(self.csv_folder, self.output_folder, self.root_folder, filename, team_points, duration_before, duration_after)
         
     def highlight(self): 
         duration_before = 7
@@ -494,7 +522,7 @@ class MatchVideo:
         
         # self.highlight_points(duration_before, duration_after, build_input_video_filename)
         # self.highlight_all_points(duration_before, duration_after, build_input_video_filename)
-        # self.output_folder=f"{self.root_folder}/logo"
+        # self.output_folder=self.with_logo_folder
         # self.highlight_all_points(duration_before, duration_after)
     
     def highlight_team_points(self, team, duration_before = 7, duration_after = 2, build_input_video_filename = lambda filename: filename, team_name="slb"):
@@ -603,7 +631,8 @@ def higlights_sequence(csv_folder,
               duration_before = 7, 
               duration_after = 1,
               input_video_filename = lambda filename: filename,
-              csv_filter = "*"):
+              csv_filter = "*",
+              dry_run=False):
     clips = []
     
     parts_by_filename = []
@@ -620,6 +649,11 @@ def higlights_sequence(csv_folder,
         sequences_are_closed = True
         for index in range(0, len(highlights)):
             if highlights[index].team == ">":
+                if not sequences_are_closed:
+                    print(f"ERROR: sequence open twice: {highlights[index]}")
+                    print(f"   File: {filename}")
+                    print(f"   Time: {seconds_to_time(highlights[index].time_in_seconds)}")
+                    raise 
                 sequences_are_closed = False
                 video_parts.append((highlights[index].time_in_seconds, None))
             elif highlights[index].team == "<":
@@ -628,6 +662,10 @@ def higlights_sequence(csv_folder,
         
         assert sequences_are_closed
         parts_by_filename.append((filename, video_parts))
+    
+    if dry_run:
+        print("Dry mode: sequence video not generate")
+        return
     
     total_time = 0
     for (filename, video_parts) in parts_by_filename:        
@@ -686,7 +724,7 @@ def higlights_demo():
         clip.write_videofile(f"{output_folder}/{output_part_file}.mp4", threads=8, preset="veryfast")
 
 
-def sequence(match):
+def sequence(match, dry_run=False):
     csv_folder=f"{match.root_folder}/sequence"
     files = EventRecord.files_sorted(f"{csv_folder}/*.csv")
         
@@ -696,7 +734,8 @@ def sequence(match):
                     f"{match.root_folder}/sequence",
                     lambda event: True, 
                     0, 
-                    0)
+                    0,
+                    dry_run=dry_run)
 
 def extract_clips(video_file, clip_times, time_in_final_video = 0):
     clip_list = []
@@ -756,31 +795,41 @@ if __name__ == "__main__":
     elif args[1] == "highlight":
         match.highlight()
         
+    elif args[1] == "highlightA":
+        match.highlightA()
+
+    elif args[1] == "highlightB":
+        match.highlightB()
+
     elif args[1] == "quarter":
         match.create_single_by_quarter()
         
     elif args[1] == "half":
         match.create_single_by_halftime()
         
-    elif args[1] == "all":
+    elif args[1] == "single":
         match.create_single_video()
         
     elif args[1] == "full":
-        #match.generate()
-        match.highlight()
+        match.generate()
+        match.insert_score()
+        match.highlightA()
+        match.highlightB()
         match.create_single_video()
         sequence(match)
         
-    elif args[1] == "xxx":
-        match.generate()
-        match.insert_score()
-        match.highlight()
-        match.create_single_video()
-        sequence(match)
-
     elif args[1] == "sequence":
         sequence(match)
         
+    elif args[1] == "sequence_dry":
+        try:
+            sequence(match, True)
+        except:
+            print("ERROR")
+            exit(1)
+    elif args[1] == "xxx":
+        match.highlight_match()
+
     else:
         print(f"Unrecognized command `{args[1]}`")
         

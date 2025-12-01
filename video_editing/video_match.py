@@ -1,4 +1,5 @@
 # Structure to manage a match
+import os 
 
 from video_recorder import EventRecord
 from video_utils import *
@@ -55,6 +56,22 @@ class MatchPart:
             
         return MatchPart(0, 0, events, score)
     
+    def build_from_csv_folder(csv_folder, 
+                filter, 
+                csv_filter = "*"):
+        
+        match_parts = []
+        for file in files_sorted(f'{csv_folder}/{csv_filter}.csv'):
+            print(file)
+            
+            filename=os.path.basename(file).replace(".csv", "")
+                    
+            match = MatchPart.build_from_csv(f"{csv_folder}/{filename}.csv")
+            match_parts.append((file, [event for event in match.events if filter(event)]))
+           
+        return match_parts
+
+
     def __init__(self, start_time, end_time, events, score=Score(0,0)):
         self.start = start_time
         self.end = end_time
