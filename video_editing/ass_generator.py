@@ -109,12 +109,26 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
             self.text
         ])
 
+import os
+import re
+from video_utils import files_sorted
 class AssGenerator():
 
     def time_to_str(seconds):
         mm, ss = divmod(seconds, 60)
         hh, mm = divmod(mm, 60)
         return "%d:%02d:%02d.00" % (hh, mm, ss)
+
+    def insert_score(ass_folder, video_folder, output_folder): 
+        
+        os.makedirs(output_folder, exist_ok=True)
+
+        for file in files_sorted(f'{ass_folder}/*.ass'):
+            filename=re.sub(r"\.ass$", "", os.path.basename(file))
+            print(filename)
+            prog = f'ffmpeg -i {video_folder}/{filename}.mp4 -vf "ass={ass_folder}/{filename}.ass" -c:a copy -c:v libx265 -crf 28 {output_folder}/{filename}.mp4'
+            print(prog)
+            os.system(prog)
 
     def __init__(self, duration_in_seconds=0, team_local="LOCAL", team_visitor="VISITOR", quarter = 1):
         self.duration_in_seconds = duration_in_seconds

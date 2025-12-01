@@ -244,25 +244,25 @@ def concat_file(folder, files, output_filepath="full.mp4"):
     # printf "file '%s'\n" *.mp4 > list.txt
     # ffmpeg -f concat -i list.txt -c copy outfile.mp4
 
-def insert_score(ass_folder, video_folder, output_folder): 
-    
-    os.makedirs(output_folder, exist_ok=True)
-
-    for file in files_sorted(f'{ass_folder}/*.ass'):
-        filename=re.sub(r"\.ass$", "", os.path.basename(file))
-        print(filename)
-        prog = f'ffmpeg -i {video_folder}/{filename}.mp4 -vf "ass={ass_folder}/{filename}.ass" -c:a copy -c:v libx265 -crf 28 {output_folder}/{filename}.mp4'
-        print(prog)
-        os.system(prog)
-        
-    # print(files)
-    # with open(f"{folder}/file_list.txt", "w") as file_list_file:
-        # file_list_file.write("\n".join([f"file '{filename}'" for filename in files]))
-#   
-    # print(f"Output: {output_filepath}")
-    # prog = f'ffmpeg -f concat -i {folder}/file_list.txt -c copy {output_filepath}'
-    # print(prog)
-    # os.system(prog)
+#def insert_score(ass_folder, video_folder, output_folder): 
+#    
+#    os.makedirs(output_folder, exist_ok=True)
+#
+#    for file in files_sorted(f'{ass_folder}/*.ass'):
+#        filename=re.sub(r"\.ass$", "", os.path.basename(file))
+#        print(filename)
+#        prog = f'ffmpeg -i {video_folder}/{filename}.mp4 -vf "ass={ass_folder}/{filename}.ass" -c:a copy -c:v libx265 -crf 28 {output_folder}/{filename}.mp4'
+#        print(prog)
+#        os.system(prog)
+#        
+#    # print(files)
+#    # with open(f"{folder}/file_list.txt", "w") as file_list_file:
+#        # file_list_file.write("\n".join([f"file '{filename}'" for filename in files]))
+##   
+#    # print(f"Output: {output_filepath}")
+#    # prog = f'ffmpeg -f concat -i {folder}/file_list.txt -c copy {output_filepath}'
+#    # print(prog)
+#    # os.system(prog)
     
 
 # preset values: ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow,
@@ -429,7 +429,7 @@ class MatchVideo:
         
 
     def insert_score(self):
-        insert_score(self.ass_folder, self.with_logo_folder, self.output_folder)
+        AssGenerator.insert_score(self.ass_folder, self.with_logo_folder, self.output_folder)
 
     def extract(self, input_data):
         higlights("Match_2024_03_17/extract", 
@@ -822,7 +822,9 @@ if __name__ == "__main__":
             print("ERROR")
             exit(1)
     elif args[1] == "xxx":
-        match.highlight_match()
+       # match.highlight_match()
+
+        match.insert_score()
 
     else:
         print(f"Unrecognized command `{args[1]}`")
