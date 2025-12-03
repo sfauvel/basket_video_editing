@@ -1,15 +1,8 @@
-import shutil
+import unittest
 from video_recorder import *
 from video_match import *
 from video_utils import *
 from video_generator import collapse_overlaps
-
-class Folder:
-    @staticmethod
-    def recreate(folder: str) -> None:
-        if os.path.exists(folder):
-            shutil.rmtree(folder)
-        os.makedirs(folder, exist_ok=True)
 
 class TestEventRecord():
     
@@ -493,9 +486,8 @@ class TestVideoGenerator():
             "0:00:10 (+1)  3              ",
         ]), "\n"+str(game_sheet)
            
-    def test_build_hightlights(self) -> None:
-        Folder.recreate("tmp")
-        with (open("tmp/tmp2.csv", "w")) as csv_file:
+    def test_build_hightlights(self, tmp_path: str) -> None:
+        with (open(f"{tmp_path}/tmp2.csv", "w")) as csv_file:
             csv_file.write("\n".join([
                 "0;-;0:00;4",
                 "1;A;0:15;4",
@@ -503,18 +495,18 @@ class TestVideoGenerator():
                 "3;A;0:40;4",
                 "0;-;2:00;4",
                 ]))
-        with (open("tmp/tmp1.csv", "w")) as csv_file:
+        with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([
                 "0;-;0:00;3",
                 "2;A;0:25;3",
                 "0;-;1:00;3",
                 ]))
             
-        parts = MatchPart.build_from_csv_folder("tmp", lambda e: e.team == "A")
+        parts = MatchPart.build_from_csv_folder(tmp_path, lambda e: e.team == "A")
         print(parts)
         assert parts == [
-            ("tmp/tmp1.csv", [EventRecord.from_csv("2;A;0:25;3")]),
-            ("tmp/tmp2.csv", [EventRecord.from_csv("1;A;0:15;4"),EventRecord.from_csv("3;A;0:40;4")]),
+            (f"{tmp_path}/tmp1.csv", [EventRecord.from_csv("2;A;0:25;3")]),
+            (f"{tmp_path}/tmp2.csv", [EventRecord.from_csv("1;A;0:15;4"),EventRecord.from_csv("3;A;0:40;4")]),
         ]
 
 
