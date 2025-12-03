@@ -5,11 +5,13 @@
 import glob
 import re
 
+from typing import Union, Self
+
 from datetime import timedelta, datetime
 from video_utils import time_to_seconds, seconds_to_time
 
 class Recorder:
-    def wait_for_points(self, ):
+    def wait_for_points(self) -> tuple[int, str]:
         print("Entrez les points et l'équipe (exemple: 2a, 1a,...)")
         x = input()
         score = re.match(r'(\d)([a|b])', x)
@@ -20,7 +22,7 @@ class Recorder:
 
         return (int(score[1]), score[2].upper())
 
-    def ask_quarter(self):
+    def ask_quarter(self) -> Union[int, None]:
         while True:
             print("Entrer le numéro du quart-temps ou juste 'ENTRER'...")
             quarter = input()
@@ -42,7 +44,7 @@ class Recorder:
     # The output file do not contains score to simplify correction. 
     # You just have to add,remove or modify lines and there is nothing else to modify in the file.
     # If you want to restart after the beginning ??? TODO restart a new file from the time to restart and pass a list of file that will be concatenated
-    def record_input(self, filename):
+    def record_input(self, filename: str) -> tuple[int, int]:
 
         start_time = datetime.now()
 
@@ -81,13 +83,13 @@ class Recorder:
 """Information from a record in csv file.
 """
 class EventRecord:
-    def __init__(self, points, team, time_in_seconds, quarter_time=None):
+    def __init__(self, points: int, team: str, time_in_seconds: int, quarter_time: Union[int, None]=None) -> None:
         self.points = points
         self.team = team
         self.time_in_seconds = time_in_seconds
         self.quarter_time = quarter_time
     
-    def __eq__(self, other):
+    def __eq__(self: Self, other: object) -> bool:
         if isinstance(other, self.__class__):
             return self.__dict__ == other.__dict__
         else:
@@ -95,18 +97,20 @@ class EventRecord:
 
     
     # !! Duplicated from video_generator
-    def files_sorted(pattern):
+    @staticmethod
+    def files_sorted(pattern: str) -> list[str]:
         files = glob.glob(pattern)
         files.sort()
         return files 
 
     # !! Duplicated from video_match
-    def read_content_of_file(file): 
+    @staticmethod
+    def read_content_of_file(file: str) -> list[str]: 
         with open(file, "r") as input_file:
             return input_file.readlines()
 
-
-    def _validate_csv_file(file):
+    @staticmethod
+    def _validate_csv_file(file: str) -> tuple[str, bool]:
         content = EventRecord.read_content_of_file(file)
         is_valid = True
         result = ""
@@ -114,7 +118,7 @@ class EventRecord:
         for line_number, line in enumerate(content, start=1):
             line = line.strip()
             try:
-                event = EventRecord.from_csv(line)
+                event: EventRecord = EventRecord.from_csv(line)
                 if event.time_in_seconds < last_time:
                      result += f"- Line {line_number}: {line} -- Time should not be less than {EventRecord._seconds_to_string(event.time_in_seconds)}"
                      print(f"Invalid: {result}")
@@ -127,8 +131,8 @@ class EventRecord:
         
         return (f"{file}: " + ("Ok" if is_valid else "Invalid") + "\n" + result, is_valid)
         
-    
-    def validate(csv_folder):
+    @staticmethod
+    def validate(csv_folder: str) -> tuple[str, bool]:
         files = EventRecord.files_sorted(f"{csv_folder}/*.csv")
         
         results = [EventRecord._validate_csv_file(file) for file in files]
@@ -136,23 +140,25 @@ class EventRecord:
         is_valid = all(is_valid for (_, is_valid) in results)
         return ("\n".join([result for (result, is_valid) in results]), is_valid)
     
-    def _seconds_to_string(time_in_seconds):
+    @staticmethod
+    def _seconds_to_string(time_in_seconds: int) -> str:
         return seconds_to_time(time_in_seconds)
         # minutes = int(time_in_seconds / 60)
         # seconds = time_in_seconds % 60
         # return f"{minutes}:{seconds:02d}"
         
-    def to_csv(self):
+    def to_csv(self: Self) -> str:
         values = [str(self.points), self.team, EventRecord._seconds_to_string(self.time_in_seconds)]
         if self.quarter_time:
             values.append(str(self.quarter_time))
         return ";".join(values)
     
-    def from_csv(csv):
+    @classmethod
+    def from_csv(cls, csv: str) -> Self:
         split = csv.split(";")
         print(split)
         quarter = int(split[3]) if len(split) > 3 else None 
-        return EventRecord(int(split[0]), split[1], time_to_seconds(split[2]), quarter) 
+        return cls(int(split[0]), split[1], time_to_seconds(split[2]), quarter) 
 
     def __str__(self) -> str:
         return f"points:{self.points}, team:{self.team}, time_in_seconds:{self.time_in_seconds}, quarter_time:{self.quarter_time}"

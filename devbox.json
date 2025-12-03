@@ -26,7 +26,8 @@
       "PYTHONPATH=$PYTHONPATH:$(realpath libs)",     
     ],
     "scripts": {
-      "opencv": "python check_opencv.py"
+      "opencv": "python check_opencv.py",
+      "check": "clear;pytest;mypy video_editing --strict"
     }
   }
   

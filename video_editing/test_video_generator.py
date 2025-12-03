@@ -1,49 +1,56 @@
+import shutil
 from video_recorder import *
 from video_match import *
 from video_utils import *
 from video_generator import collapse_overlaps
 
+class Folder:
+    @staticmethod
+    def recreate(folder: str) -> None:
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+        os.makedirs(folder, exist_ok=True)
 
 class TestEventRecord():
     
-    def test_event_record_to_csv(self):
+    def test_event_record_to_csv(self) -> None:
         assert "3;A;0:00:12;2" == EventRecord(3, "A", 12, 2).to_csv()
         assert "3;A;0:00:02;2" == EventRecord(3, "A", 2, 2).to_csv(), EventRecord(3, "A", 2, 2).to_csv()
         
-    def test_event_record_to_csv_with_minutes(self):
+    def test_event_record_to_csv_with_minutes(self) -> None:
         assert "3;A;0:02:12;2" == EventRecord(3, "A", 132, 2).to_csv()
         
-    def test_event_record_to_csv_without_quarter(self):
+    def test_event_record_to_csv_without_quarter(self) -> None:
         assert "3;A;0:00:12" == EventRecord(3, "A", 12, None).to_csv()
 
-    def test_event_record_from_csv(self):
-        record = EventRecord.from_csv("3;A;0:12;2")
+    def test_event_record_from_csv(self) -> None:
+        record: EventRecord = EventRecord.from_csv("3;A;0:12;2")
         assert 3 == record.points
         assert "A" == record.team
         assert 12 == record.time_in_seconds
         assert 2 == record.quarter_time
 
-    def test_event_record_from_csv_without_quarter(self):
-        record = EventRecord.from_csv("3;A;0:12")
+    def test_event_record_from_csv_without_quarter(self) -> None:
+        record: EventRecord = EventRecord.from_csv("3;A;0:12")
         assert None == record.quarter_time
         
-    def test_event_record_from_csv_with_time_in_minutes(self):
-        record = EventRecord.from_csv("3;A;4:25;2")
+    def test_event_record_from_csv_with_time_in_minutes(self) -> None:
+        record: EventRecord = EventRecord.from_csv("3;A;4:25;2")
         assert 4*60+25 == record.time_in_seconds
         
-    def test_event_record_from_csv_with_time_in_minutes(self):
+    def test_malformed_event_record_from_csv_raise_an_exception(self) -> None:
         try:
-            record = EventRecord.from_csv("3;A;4:25m:s")
+            record: EventRecord = EventRecord.from_csv("3;A;4:25m:s")
         except:
             return
         assert False, "An exception should be thrown"
         
     
-    def test_event_record_from_csv_with_time_with_hour(self):
-        record = EventRecord.from_csv("3;A;0:04:25;2")
+    def test_event_record_from_csv_with_time_with_hour(self) -> None:
+        record: EventRecord = EventRecord.from_csv("3;A;0:04:25;2")
         assert 4*60+25 == record.time_in_seconds
         
-    def test_event_record_validation_ok(self, tmp_path):
+    def test_event_record_validation_ok(self, tmp_path: str) -> None:
         with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([
                 "0;-;0:00;4",
@@ -55,7 +62,7 @@ class TestEventRecord():
         assert valid == True
         assert "tmp1.csv: Ok" in result, result
         
-    def test_event_record_invalid(self, tmp_path):
+    def test_event_record_invalid(self, tmp_path: str) -> None:
         with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([
                 "0;-;0:00;4",
@@ -68,9 +75,9 @@ class TestEventRecord():
         assert "tmp1.csv: Invalid" in result, result
         assert "- Line 2: 2;A;25;4" in result, result
         
-        
-    def test_event_record_show_all_invalid_lines(self, tmp_path):
+    def test_event_record_show_all_invalid_lines(self, tmp_path: str) -> None:
         with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
+
             csv_file.write("\n".join([
                 "0;-;0:00;4",
                 "2;A;25;4",
@@ -93,7 +100,8 @@ class TestEventRecord():
         assert "tmp2.csv: Invalid" in result, result
         assert "- Line 2: 2;B;12;4" in result, result
         
-    def test_event_record_when_time_is_not_well_ordered(self, tmp_path):
+        
+    def test_event_record_when_time_is_not_well_ordered(self, tmp_path: str) -> None:
         with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([
                 "0;-;0:00;4",
@@ -109,11 +117,11 @@ class TestEventRecord():
   
 class TestVideoGenerator():
 
-    def test_build_match_part_from_csv(self, tmp_path):
+    def test_build_match_part_from_csv(self, tmp_path: str) -> None:
         events = [EventRecord(2,"A",5),EventRecord(1,"B",6),EventRecord(3,"A",7),EventRecord(0,"X",9)]
         with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([e.to_csv() for e in events]))
-            
+                        
         match_part = MatchPart.build_from_csv(f"{tmp_path}/tmp1.csv")
                 
         states = match_part.states()
@@ -128,8 +136,7 @@ class TestVideoGenerator():
         assert states[1].score.team_a == 2
         assert states[1].score.team_b == 0
         
-    
-    def test_build_match_part_from_csv_with_initial_score(self, tmp_path):
+    def test_build_match_part_from_csv_with_initial_score(self, tmp_path: str) -> None:
         events = [EventRecord(2,"A",5),EventRecord(1,"B",6),EventRecord(3,"A",7),EventRecord(0,"X",9)]
         with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n".join([e.to_csv() for e in events]))
@@ -150,7 +157,7 @@ class TestVideoGenerator():
         assert states[1].score.team_b == 3
 
 
-    def test_build_match_part_from_csv_with_empty_lines(self, tmp_path):
+    def test_build_match_part_from_csv_with_empty_lines(self, tmp_path: str) -> None:
         events = [EventRecord(2,"A",5),EventRecord(1,"B",6),EventRecord(3,"A",7),EventRecord(0,"X",9)]
         with (open(f"{tmp_path}/tmp1.csv", "w")) as csv_file:
             csv_file.write("\n")
@@ -159,14 +166,14 @@ class TestVideoGenerator():
             csv_file.write("\n")
 
             print("\n".join([e.to_csv() for e in events]))
-            
+   
         match_part = MatchPart.build_from_csv(f"{tmp_path}/tmp1.csv", Score(5,3))
                 
         states = match_part.states()
         
         assert len(states) == 4
         
-    def test_extract_infos(self):
+    def test_extract_infos(self) -> None:
         infos = EventFile().extract_lines_infos([
             "2;A;0:03;3",
             "1;B;0:05;3",
@@ -179,7 +186,7 @@ class TestVideoGenerator():
         assert infos[3] == (5, 1, 7, 10, EventRecord.from_csv("0;A;0:10;3"))
         assert len(infos) == 4
         
-    def test_extract_infos_with_several_formats_with_an_initial_score_and_time(self):
+    def test_extract_infos_with_several_formats_with_an_initial_score_and_time(self) -> None:
         infos = EventFile().extract_lines_infos([
             "2;A;0:03;4",
             "0;A;0:08;4",
@@ -188,7 +195,7 @@ class TestVideoGenerator():
         assert infos[0] == (5, 8, 10, 13, EventRecord.from_csv("2;A;0:03;4")), infos[0]
         assert infos[1] == (7, 8, 13, 18, EventRecord.from_csv("0;A;0:08;4")), infos[1]
 
-    def test_extract_match_events_can_read_event_without_team(self):
+    def test_extract_match_events_can_read_event_without_team(self) -> None:
         match_events = EventFile().extract_match_events([
             "0;;0:00",
             "2;A;0:03",
@@ -204,7 +211,7 @@ class TestVideoGenerator():
         assert match_events.events[-1].points == 0
         assert match_events.events[-1].team == ""
 
-    def test_extract_match_events(self):
+    def test_extract_match_events(self) -> None:
         match_events = EventFile().extract_match_events([
             "0;X;0:00",
             "2;A;0:03",
@@ -225,7 +232,7 @@ class TestVideoGenerator():
         assert match_events.events[1].quarter_time == None
         
     
-    def test_extract_match_states(self):
+    def test_extract_match_states(self) -> None:
         match_events = EventFile().extract_match_events([
             "2;A;0:03;2",
             "1;B;0:05;2",
@@ -249,7 +256,7 @@ class TestVideoGenerator():
         assert states[1].score.team_b == 0
         assert states[1].quarter_time == 2
     
-    def test_extract_match_states_with_a_first_event(self):
+    def test_extract_match_states_with_a_first_event(self) -> None:
         match_events = EventFile().extract_match_events([
             "0;X;0:00;1",
             "1;B;0:05;2",
@@ -268,7 +275,7 @@ class TestVideoGenerator():
         assert states[1].score.team_b == 0
         assert states[1].quarter_time == 1
         
-    def test_extract_match_states_compute_score(self):
+    def test_extract_match_states_compute_score(self) -> None:
         match_events = EventFile().extract_match_events([
             "2;A;0:03;2",
             "1;B;0:05;2",
@@ -287,7 +294,7 @@ class TestVideoGenerator():
         assert states[2].score.team_b == 1
         
         
-    def test_extract_match_states_with_initial_values(self):
+    def test_extract_match_states_with_initial_values(self) -> None:
         match_events = EventFile().extract_match_events([
             "2;A;0:03;2",
             "1;B;0:05;2",
@@ -306,7 +313,7 @@ class TestVideoGenerator():
         assert states[2].score.team_a == 8
         assert states[2].score.team_b == 4
         
-    def test_extract_match_states_last_state(self):
+    def test_extract_match_states_last_state(self) -> None:
         match_events = EventFile().extract_match_events([
             "2;A;0:03;2",
             "1;B;0:05;2",
@@ -322,7 +329,7 @@ class TestVideoGenerator():
         assert states[-1].quarter_time == 2
     
     
-    def test_extract_match_states_align_to_the_time(self):
+    def test_extract_match_states_align_to_the_time(self) -> None:
         match_events = EventFile().extract_match_events([
             "2;A;0:03;2",
             "1;B;0:05;2",
@@ -335,7 +342,7 @@ class TestVideoGenerator():
         assert states[-1].end == 15
     
     
-    def test_extract_match_states_cut_last_state_if_not_in_time(self):
+    def test_extract_match_states_cut_last_state_if_not_in_time(self) -> None:
         match_events = EventFile().extract_match_events([
             "2;A;0:03;2",
             "1;B;0:05;2",
@@ -347,7 +354,7 @@ class TestVideoGenerator():
         assert states[-1].start == 5
         assert states[-1].end == 6
         
-    def test_extract_match_final_score(self):
+    def test_extract_match_final_score(self) -> None:
         match_events = EventFile().extract_match_events([
             "2;A;0:03;2",
             "1;B;0:05;2",
@@ -359,7 +366,7 @@ class TestVideoGenerator():
         assert final_score.team_a == 25
         assert final_score.team_b == 11
     
-    def test_collapse_overlap_without_overlap(self):
+    def test_collapse_overlap_without_overlap(self) -> None:
         events = EventFile().extract_match_events([
             "2;A;0:13;2",
             "1;B;0:25;2",
@@ -370,7 +377,7 @@ class TestVideoGenerator():
         assert collapse_overlaps(events.events, 5, 3) == [(8, 16), (20, 28), (32, 40), (45, 53)], collapse_overlaps(events.events, 5, 3)
         
     
-    def test_collapse_overlap_with_overlap(self):
+    def test_collapse_overlap_with_overlap(self) -> None:
         events = EventFile().extract_match_events([
             "2;A;0:13;2",
             "1;B;0:25;2",
@@ -381,7 +388,7 @@ class TestVideoGenerator():
         assert collapse_overlaps(events.events, 5, 3) == [(8, 16), (20, 31), (45, 53)], collapse_overlaps(events.events, 5, 3)
         
     
-    def test_collapse_overlap_first_event_before_0(self):
+    def test_collapse_overlap_first_event_before_0(self) -> None:
         events = EventFile().extract_match_events([
             "2;A;0:03;2",
             "1;B;0:25;2",
@@ -390,7 +397,7 @@ class TestVideoGenerator():
         assert collapse_overlaps(events.events, 5, 3) == [(0, 6), (20, 28)], collapse_overlaps(events.events, 5, 3)
 
 
-    def test_build_match_sheet_with_A_score(self):
+    def test_build_match_sheet_with_A_score(self) -> None:
         match_events = EventFile().extract_match_events([
             "2;A;0:03;2",
         ])
@@ -400,7 +407,7 @@ class TestVideoGenerator():
             "0:00:03 (+2)  2              ",
         ]), "\n"+str(match_events.game_sheet())
         
-    def test_build_match_sheet_with_B_score(self):
+    def test_build_match_sheet_with_B_score(self) -> None:
         match_events = EventFile().extract_match_events([
             "2;B;0:03;2",
         ])
@@ -411,7 +418,7 @@ class TestVideoGenerator():
         ]), "\n"+str(match_events.game_sheet())
         
         
-    def test_build_match_sheet_with_some_scores(self):
+    def test_build_match_sheet_with_some_scores(self) -> None:
         match_events = EventFile().extract_match_events([
             "2;A;0:13;2",
             "1;B;0:25;2",
@@ -426,7 +433,7 @@ class TestVideoGenerator():
             "0:00:37 (+3)  5              ",
         ]), "\n"+str(match_events.game_sheet())
         
-    def test_build_match_sheet_start_at(self):
+    def test_build_match_sheet_start_at(self) -> None:
         match_events = EventFile().extract_match_events([
             "2;A;0:03;2",
         ])
@@ -437,7 +444,7 @@ class TestVideoGenerator():
         ]), "\n"+str(match_events.game_sheet())
         
         
-    def test_build_match_sheet_should_not_add_when_no_points(self):
+    def test_build_match_sheet_should_not_add_when_no_points(self) -> None:
         match_events = EventFile().extract_match_events([
             "2;A;0:03;2",
             "0;-;0:04;2",
@@ -448,7 +455,7 @@ class TestVideoGenerator():
             "0:00:03 (+2)  2              ",
         ]), "\n"+str(match_events.game_sheet())
         
-    def test_build_match_sheet_with_several_match_part(self):
+    def test_build_match_sheet_with_several_match_part(self) -> None:
         match_events_1= EventFile().extract_match_events([
             "2;A;0:03;2",
             "1;B;0:05;2",
@@ -469,7 +476,7 @@ class TestVideoGenerator():
             "              6  (+2) 0:00:16",
         ]), "\n"+str(game_sheet)
         
-    def test_build_match_sheet_with_several_match_part_should_add_1_second_each_2_files(self):
+    def test_build_match_sheet_with_several_match_part_should_add_1_second_each_2_files(self) -> None:
         match_events_1= EventFile().extract_match_events([
             "1;A;0:03;2",
         ])
@@ -485,9 +492,8 @@ class TestVideoGenerator():
             "0:00:06 (+1)  2              ",
             "0:00:10 (+1)  3              ",
         ]), "\n"+str(game_sheet)
-        
-        
-    def test_build_hightlights(self):
+           
+    def test_build_hightlights(self) -> None:
         Folder.recreate("tmp")
         with (open("tmp/tmp2.csv", "w")) as csv_file:
             csv_file.write("\n".join([
@@ -512,9 +518,7 @@ class TestVideoGenerator():
         ]
 
 
-
-
-    def test_build_match_display(self):
+    def test_build_match_display(self) -> None:
         match_events = EventFile().extract_match_events([
             "2;A;0:03;2",
             "0;-;0:04;2",
@@ -526,7 +530,7 @@ class TestVideoGenerator():
             "0:00:05       TEAM A   2 - 1   TEAM B  +1  (1)   2 qt",
         ]), "\n"+display
         
-    def test_score_by_quarter(self):
+    def test_score_by_quarter(self) -> None:
         by_quarter = EventFile().extract_match_events([
             "2;A;0:03;1",
             "0;-;0:04;1",
@@ -542,7 +546,7 @@ class TestVideoGenerator():
         assert by_quarter[3] == Score(1,0), f"quarter 3 => {by_quarter[3]}"
         assert 4 not in by_quarter, f"quarter 4 => {by_quarter[4]}"
     
-    def test_score_equality(self):
+    def test_score_equality(self) -> None:
         assert Score(2,1) == Score(2,1) 
         assert Score(2,4) != Score(2,1) 
         assert Score(5,1) != Score(2,1) 

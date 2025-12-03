@@ -139,3 +139,18 @@ or
 ----
 python3 test_video_generator.py
 ----
+
+.Class vs static:
+* https://www.geeksforgeeks.org/python/class-method-vs-static-method-python/
+* https://peps.python.org/pep-0673/
+
+.Check type
+----
+clear;mypy video_editing/video_match.py --strict
+----
+
+or 
+
+----
+devbox run check
+----

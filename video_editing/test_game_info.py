@@ -1,4 +1,4 @@
-from doc_as_test_pytest import DocAsTest, doc, doc_module
+from doc_as_test_pytest import DocAsTest, doc, doc_module # type: ignore
 
 from game_info import GameInfo
 
@@ -7,8 +7,7 @@ class TestGameInfo:
     Information of the game is retrieve from the file.
     """
     
-    def test_extract_info_from_file(self, doc, tmp_path): 
-
+    def test_extract_info_from_file(self, doc: DocAsTest, tmp_path: str) -> None: 
         file_content = """Date: 22/02/2025
 Locaux: Paris
 Visiteurs: Cholet

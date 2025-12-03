@@ -1,4 +1,4 @@
-from doc_as_test_pytest import DocAsTest, doc, doc_module
+from doc_as_test_pytest import DocAsTest, doc, doc_module # type: ignore
 
 import video_utils
 
@@ -7,12 +7,12 @@ class TestTimeMapping:
     Utilities to map time to string.
     """
     
-    def test_time_to_seconds(self, doc):
+    def test_time_to_seconds(self, doc: DocAsTest) -> None:
         """
         The function `time_to_seconds` transform the text of a time to the number of seconds. 
         """
         
-        def text_time_to_seconds(time):
+        def text_time_to_seconds(time: str) -> str:
             try:
                 seconds = video_utils.time_to_seconds(time)
                 return f"- {time} -> {seconds}s"
@@ -31,12 +31,12 @@ class TestTimeMapping:
             text_time_to_seconds("1:02:14:25"),
         ]))
         
-    def test_seconds_to_time(self, doc):
+    def test_seconds_to_time(self, doc: DocAsTest) -> None:
         """
         The function `seconds_to_time` transform a number of seconds to a time as text. 
         """
         
-        def text_seconds_to_time(seconds):
+        def text_seconds_to_time(seconds: int) -> str:
             time = video_utils.seconds_to_time(seconds)
             return f"- {seconds}s -> {time}"
 
@@ -48,13 +48,14 @@ class TestTimeMapping:
 import os
 import shutil
 class Folder:
-    def recreate(folder):
+    @staticmethod
+    def recreate(folder: str) -> None:
         if os.path.exists(folder):
             shutil.rmtree(folder)
         os.makedirs(folder, exist_ok=True)
 
 class TestFiles:
-    def test_sort(self, doc):
+    def test_sort(self, doc: DocAsTest) -> None:
         folder = "tmp"
         Folder.recreate(folder)
         files = ["tmp3.csv", "tmp1.csv", "tmp2.csv", "tmp4.txt"]
@@ -77,7 +78,7 @@ class TestFiles:
             "|===="
         ]))
 
-    def test_files_before(self, doc):
+    def test_files_before(self, doc: DocAsTest) -> None:
         folder = "tmp"
         Folder.recreate(folder)
         files = ["tmp3.csv", "tmp1.csv", "tmp2.csv", "tmp4.txt"]

@@ -1,7 +1,8 @@
 
-from video_match import EventRecord, Score
+from video_match import MatchPart, Score
+from video_recorder import EventRecord
 
-def display_graph(match_parts):
+def display_graph(match_parts: MatchPart) -> str:
     score = Score()
     infos = [(score.team_a, score.team_b, EventRecord(0,"",0,1))]
     
@@ -13,7 +14,8 @@ def display_graph(match_parts):
     
     quarter_index = {}
     for (index, (_,_,record)) in enumerate(infos):
-        quarter_index[record.quarter_time-1] = index
+        quarter_time = record.quarter_time or 1
+        quarter_index[quarter_time] = index
     
     formated_scores = "\n".join([f"{index}, {value}" for (index, value) in enumerate(scores)])
     delta_max=max(scores)

@@ -3,7 +3,7 @@
 import glob
 import re
 
-def time_to_seconds(time):
+def time_to_seconds(time: str) -> int:
     split = time.split(":")
     if len(split) < 2  or 3 < len(split):
         raise Exception(f"Invalid time: '{time}'")
@@ -23,8 +23,8 @@ def time_to_seconds(time):
         seconds += 60*60*int(split[-3])
         
     return int(seconds)
-    
-def seconds_to_time(time_in_seconds):
+
+def seconds_to_time(time_in_seconds: int) -> str:
     hour = int(time_in_seconds / 3600)
     time_in_seconds -= hour * 3600
     minutes = int(time_in_seconds / 60)
@@ -32,12 +32,12 @@ def seconds_to_time(time_in_seconds):
     seconds = time_in_seconds
     return f"{hour:01d}:{minutes:02d}:{seconds:02d}"
 
-def files_sorted(pattern):
+def files_sorted(pattern: str) -> list[str]:
     files = glob.glob(pattern)
     files.sort()
     return files 
 
-def files_before(pattern, first_file_exclude):
+def files_before(pattern: str, first_file_exclude: str) -> list[str]:
     files = glob.glob(pattern)
     files.sort()
     return [file for file in files if file < first_file_exclude] 

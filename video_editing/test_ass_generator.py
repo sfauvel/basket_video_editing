@@ -1,4 +1,4 @@
-from doc_as_test_pytest import DocAsTest, doc, doc_module
+from doc_as_test_pytest import DocAsTest, doc, doc_module # type: ignore
 
 from game_info import GameInfo
 from ass_generator import AssGenerator, Event
@@ -10,7 +10,7 @@ class TestAss:
     You can find information in https://github.com/libass/libass/wiki/ASS-File-Format-Guide[ASS-File-Format-Guide]
     """
 
-    def test_header_section(self, doc): 
+    def test_header_section(self, doc: DocAsTest) -> None:
         ass = AssGenerator()
         doc.write("\n".join([
             "----",
@@ -18,14 +18,14 @@ class TestAss:
             "----",]))
 
 
-    def test_style_section(self, doc): 
+    def test_style_section(self, doc: DocAsTest) -> None:
         ass = AssGenerator()
         doc.write("\n".join([
             "----",
             ass.style(),
             "----",]))
         
-    def test_event_section(self, doc): 
+    def test_event_section(self, doc: DocAsTest) -> None:
         duration_in_seconds=120
         team_local="SLB"
         team_visitor="NBH"
@@ -43,7 +43,7 @@ class TestAss:
             ass.events([]),
             "----",]))
         
-    def test_event_section_with_events(self, doc): 
+    def test_event_section_with_events(self, doc: DocAsTest) -> None:
         duration_in_seconds=120
         team_local="SLB"
         team_visitor="NBH"
@@ -91,7 +91,7 @@ class TestAss:
 
 # Style: Quarter, Arial, 6,&H0000FFFF,&H00FFFF00,&H00303030,&H80000008,-1,0,0,0,100,100,0.00,0.00,1,1.00,2.00, 8 ,0,0,5,0
 
-    def test_time_to_str(self, doc): 
+    def test_time_to_str(self, doc: DocAsTest) -> None:
         values = [0, 1, 60, 3600, 36000]
         doc.write("\n".join([
             "|====",
